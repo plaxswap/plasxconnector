@@ -60,7 +60,7 @@ export const createSWRWrapper =
   (fallbackData = undefined) =>
   ({ children }) =>
     (
-      <WagmiConfig config={client}>
+      <WagmiConfig client={client}>
         <SWRConfig value={{ fallback: fallbackData }}>{children}</SWRConfig>
       </WagmiConfig>
     )
@@ -68,7 +68,7 @@ export const createSWRWrapper =
 export const createWagmiWrapper =
   () =>
   ({ children }) =>
-    <WagmiConfig config={client}>{children}</WagmiConfig>
+    <WagmiConfig client={client}>{children}</WagmiConfig>
 
 // re-export everything
 export * from '@testing-library/react'
