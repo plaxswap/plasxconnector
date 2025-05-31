@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { Flex, Skeleton, Text, Balance } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { getBalanceNumber, getFullDisplayBalance } from '@pancakeswap/utils/formatBalance'
 
 interface RewardBracketDetailProps {
@@ -22,12 +22,12 @@ const RewardBracketDetail: React.FC<React.PropsWithChildren<RewardBracketDetailP
   isLoading,
 }) => {
   const { t } = useTranslation()
-  const cakePriceBusd = usePriceCakeBusd()
+  const cakePriceBusd = usePriceCakeUSD()
 
   const getRewardText = () => {
     const numberMatch = rewardBracket + 1
     if (isBurn) {
-      return t('Pool')
+      return t('Burn')
     }
     if (rewardBracket === 5) {
       return t('Match all %numberMatch%', { numberMatch })
@@ -48,7 +48,7 @@ const RewardBracketDetail: React.FC<React.PropsWithChildren<RewardBracketDetailP
         {isLoading || cakeAmount.isNaN() ? (
           <Skeleton my="4px" mr="10px" height={20} width={110} />
         ) : (
-          <Balance fontSize="20px" bold unit=" PLAX" value={getBalanceNumber(cakeAmount)} decimals={0} />
+          <Balance fontSize="20px" bold unit=" CAKE" value={getBalanceNumber(cakeAmount)} decimals={0} />
         )}
         {isLoading || cakeAmount.isNaN() ? (
           <>
@@ -67,7 +67,7 @@ const RewardBracketDetail: React.FC<React.PropsWithChildren<RewardBracketDetailP
           <>
             {numberWinners !== '0' && (
               <Text fontSize="12px" color="textSubtle">
-                {getFullDisplayBalance(cakeAmount.div(parseInt(numberWinners, 10)), 18, 2)} PLAX {t('each')}
+                {getFullDisplayBalance(cakeAmount.div(parseInt(numberWinners, 10)), 18, 2)} CAKE {t('each')}
               </Text>
             )}
             <Text fontSize="12px" color="textSubtle">

@@ -1,34 +1,104 @@
-import { FixedNumber } from '@ethersproject/bignumber'
-import { FarmWithPrices } from './farmPrices'
+import BN from 'bignumber.js'
+import { parseNumberToFraction, formatFraction } from '@pancakeswap/utils/formatFractions'
+import { BigintIsh, ZERO } from '@pancakeswap/sdk'
 
-// copy from src/config, should merge them later
-const BSC_BLOCK_TIME = 3
-const BLOCKS_PER_YEAR = (60 / BSC_BLOCK_TIME) * 60 * 24 * 365 // 10512000
+type BigNumberish = BN | number | string
 
-const FIXED_ZERO = FixedNumber.from(0)
-const FIXED_100 = FixedNumber.from(100)
+interface FarmAprParams {
+  poolWeight: BigNumberish
+  // Total tvl staked in farm in usd
+  tvlUsd: BigNumberish
+  cakePriceUsd: BigNumberish
+  cakePerSecond: BigNumberish
 
-export const getFarmCakeRewardApr = (farm: FarmWithPrices, cakePriceBusd: FixedNumber, regularCakePerBlock: number) => {
-  let cakeRewardsAprAsString = '0'
-  if (!cakePriceBusd) {
-    return cakeRewardsAprAsString
+  precision?: number
+}
+
+const SECONDS_FOR_YEAR = 365 * 60 * 60 * 24
+
+const isValid = (num: BigNumberish) => {
+  const bigNumber = new BN(num)
+  return bigNumber.isFinite() && bigNumber.isPositive()
+}
+
+const formatNumber = (bn: BN, precision: number) => {
+  return formatFraction(parseNumberToFraction(bn.toNumber(), precision), precision)
+}
+
+export function getFarmApr({ poolWeight, tvlUsd, cakePriceUsd, cakePerSecond, precision = 6 }: FarmAprParams) {
+  if (!isValid(poolWeight) || !isValid(tvlUsd) || !isValid(cakePriceUsd) || !isValid(cakePerSecond)) {
+    return '0'
   }
-  const totalLiquidity = FixedNumber.from(farm.lpTotalInQuoteToken).mulUnsafe(
-    FixedNumber.from(farm.quoteTokenPriceBusd),
-  )
-  const poolWeight = FixedNumber.from(farm.poolWeight)
-  if (totalLiquidity.isZero() || poolWeight.isZero()) {
-    return cakeRewardsAprAsString
+
+  const cakeRewardPerYear = new BN(cakePerSecond).times(SECONDS_FOR_YEAR)
+  const farmApr = new BN(poolWeight).times(cakeRewardPerYear).times(cakePriceUsd).div(tvlUsd).times(100)
+
+  if (farmApr.isZero()) {
+    return '0'
   }
-  const yearlyCakeRewardAllocation = poolWeight
-    ? poolWeight.mulUnsafe(FixedNumber.from(BLOCKS_PER_YEAR).mulUnsafe(FixedNumber.from(String(regularCakePerBlock))))
-    : FIXED_ZERO
-  const cakeRewardsApr = yearlyCakeRewardAllocation
-    .mulUnsafe(cakePriceBusd)
-    .divUnsafe(totalLiquidity)
-    .mulUnsafe(FIXED_100)
-  if (!cakeRewardsApr.isZero()) {
-    cakeRewardsAprAsString = cakeRewardsApr.toUnsafeFloat().toFixed(2)
+
+  return formatNumber(farmApr, precision)
+}
+
+export interface PositionFarmAprParams extends Omit<FarmAprParams, 'tvlUsd'> {
+  // Position liquidity
+  liquidity: BigintIsh
+
+  // Total staked liquidity in farm
+  totalStakedLiquidity: BigintIsh
+
+  // Position tvl in usd
+  positionTvlUsd: BigNumberish
+}
+
+export function getPositionFarmApr({
+  poolWeight,
+  positionTvlUsd,
+  cakePriceUsd,
+  cakePerSecond,
+  liquidity,
+  totalStakedLiquidity,
+  precision = 6,
+}: PositionFarmAprParams) {
+  const aprFactor = getPositionFarmAprFactor({
+    poolWeight,
+    cakePriceUsd,
+    cakePerSecond,
+    liquidity,
+    totalStakedLiquidity,
+  })
+  if (!isValid(aprFactor) || !isValid(positionTvlUsd)) {
+    return '0'
   }
-  return cakeRewardsAprAsString
+
+  const positionApr = aprFactor.times(liquidity.toString()).div(positionTvlUsd)
+
+  return formatNumber(positionApr, precision)
+}
+
+export function getPositionFarmAprFactor({
+  poolWeight,
+  cakePriceUsd,
+  cakePerSecond,
+  liquidity,
+  totalStakedLiquidity,
+}: Omit<PositionFarmAprParams, 'positionTvlUsd' | 'precision'>) {
+  if (
+    !isValid(poolWeight) ||
+    !isValid(cakePriceUsd) ||
+    !isValid(cakePerSecond) ||
+    BigInt(liquidity) === ZERO ||
+    BigInt(totalStakedLiquidity) === ZERO
+  ) {
+    return new BN(0)
+  }
+
+  const cakeRewardPerYear = new BN(cakePerSecond).times(SECONDS_FOR_YEAR)
+  const aprFactor = new BN(poolWeight)
+    .times(cakeRewardPerYear)
+    .times(cakePriceUsd)
+    .div((BigInt(liquidity) + BigInt(totalStakedLiquidity)).toString())
+    .times(100)
+
+  return aprFactor
 }

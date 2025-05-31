@@ -1,23 +1,9 @@
 import { Obj } from 'itty-router'
 import { error } from 'itty-router-extras'
 import { createFarmFetcher } from '@pancakeswap/farms'
-import { createMulticall } from '@pancakeswap/multicall'
-import { bscProvider, bscTestnetProvider } from './provider'
+import { viemProviders } from './provider'
 
-export const getProvider = ({ chainId }: { chainId?: number }) => {
-  switch (chainId) {
-    case 137:
-      return bscProvider
-    case 80001:
-      return bscTestnetProvider
-    default:
-      return null
-  }
-}
-
-const multicall = createMulticall(getProvider)
-
-export const farmFetcher = createFarmFetcher(multicall.multicallv2)
+export const farmFetcher = createFarmFetcher(viemProviders)
 
 export function requireChainId(params: Obj | undefined) {
   if (!params) {

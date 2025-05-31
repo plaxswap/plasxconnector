@@ -14,17 +14,17 @@ import {
   MessageText,
   Message,
 } from '@pancakeswap/uikit'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import ConnectWalletButton from 'components/ConnectWalletButton'
 import { useTranslation } from '@pancakeswap/localization'
 import Image from 'next/legacy/image'
 import NextLink from 'next/link'
 import styled, { useTheme } from 'styled-components'
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 import { useBCakeProxyContractAddress } from '../hooks/useBCakeProxyContractAddress'
 import useBCakeProxyBalance from '../hooks/useBCakeProxyBalance'
 import { useUserBoosterStatus } from '../hooks/useUserBoosterStatus'
 import { useUserLockedCakeStatus } from '../hooks/useUserLockedCakeStatus'
-// import boosterCardImage from '../images/boosterCardImage.png'
+import boosterCardImage from '../images/boosterCardImage.png'
 import CreateProxyButton from './YieldBooster/components/CreateProxyButton'
 
 export const CardWrapper = styled.div`
@@ -77,7 +77,7 @@ export const BCakeProxyCakeBalanceCard = () => {
     <Message marginBottom="8px" variant="warning">
       <MessageText>
         {t(
-          'There is %amount% PLAX in the proxy booster contract. In order to harvest that amount you should withdraw, deposit or harvest one of the boosted farms.',
+          'There is %amount% CAKE in the proxy booster contract. In order to harvest that amount you should withdraw, deposit or harvest one of the boosted farms.',
           { amount: bCakeProxyDisplayBalance },
         )}
       </MessageText>
@@ -91,7 +91,7 @@ export const useBCakeTooltipContent = () => {
     <>
       <Box mb="20px">
         {t(
-          'Yield Boosters allow you to boost your farming yields by locking PLAX in the fixed-term staking PLAX pool. The more PLAX you lock, and the longer you lock them, the higher the boost you will receive.',
+          'Yield Boosters allow you to boost your farming yields by locking CAKE in the fixed-term staking CAKE pool. The more CAKE you lock, and the longer you lock them, the higher the boost you will receive.',
         )}
       </Box>
       <Box>
@@ -119,7 +119,7 @@ export const BCakeBoosterCard = () => {
   return (
     <CardWrapper>
       <ImageWrapper>
-        <Image src="https://plaxswap.github.io/blockchain/boosterCardImage.png" alt="boosterCardImage" width={99} height={191}/>
+        <Image src={boosterCardImage} alt="boosterCardImage" width={99} height={191} placeholder="blur" />
       </ImageWrapper>
       <Card p="0px" style={{ zIndex: 1 }}>
         <StyledCardBody style={{ padding: '15px 24px' }}>
@@ -143,7 +143,7 @@ export const BCakeBoosterCard = () => {
 
 const CardContent: React.FC = () => {
   const { t } = useTranslation()
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   const { proxyCreated, refreshProxyAddress } = useBCakeProxyContractAddress(account, chainId)
   const { maxBoostCounts, remainingCounts } = useUserBoosterStatus(account)
   const { locked, lockedEnd } = useUserLockedCakeStatus()
@@ -156,7 +156,7 @@ const CardContent: React.FC = () => {
           {t('Connect wallet to view booster')}
         </Text>
         <Text color="textSubtle" fontSize={12} mb="16px">
-          {t('An active fixed-term PLAX staking position is required for activating farm yield boosters.')}
+          {t('An active fixed-term CAKE staking position is required for activating farm yield boosters.')}
         </Text>
         <ConnectWalletButton width="100%" style={{ backgroundColor: theme.colors.textSubtle }} />
       </Box>
@@ -165,10 +165,10 @@ const CardContent: React.FC = () => {
     return (
       <Box width="100%">
         <Text color="textSubtle" fontSize={12} bold>
-          {t('No PLAX locked')}
+          {t('No CAKE locked')}
         </Text>
         <Text color="textSubtle" fontSize={12} mb="16px">
-          {t('An active fixed-term PLAX staking position is required for activating farm yield boosters.')}
+          {t('An active fixed-term CAKE staking position is required for activating farm yield boosters.')}
         </Text>
         <NextLink href="/pools" passHref>
           <Button width="100%" style={{ backgroundColor: theme.colors.textSubtle }}>
@@ -184,7 +184,7 @@ const CardContent: React.FC = () => {
           {t('Locked staking is ended')}
         </Text>
         <Text color="textSubtle" fontSize={12} mb="16px">
-          {t('An active fixed-term PLAX staking position is required for activating farm yield boosters.')}
+          {t('An active fixed-term CAKE staking position is required for activating farm yield boosters.')}
         </Text>
         <NextLink href="/pools" passHref>
           <Button width="100%" style={{ backgroundColor: theme.colors.textSubtle }}>

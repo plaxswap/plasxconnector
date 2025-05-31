@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { Card, CardBody, CardHeader, Heading, Text, Flex, PageSection } from '@pancakeswap/uikit'
+import { Card, CardBody, CardHeader, Heading, Text, Flex, PageSection, Link } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
 import FoldableText from 'components/FoldableSection/FoldableText'
 import useTheme from 'hooks/useTheme'
@@ -54,7 +54,7 @@ const Question = () => {
         <Card>
           <CardHeader>
             <Heading color="secondary" scale="lg">
-              {t('Details')}
+              {t('FAQ')}
             </Heading>
           </CardHeader>
           <StyledCardBody>
@@ -71,12 +71,27 @@ const Question = () => {
                 {t('Strong understanding of PancakeSwap and our ecosystem')}
               </StyledListText>
             </FoldableText>
-            <FoldableText title={t('Pairs must meet the following eligibility criteria:')} mt="24px">
+            <FoldableText title={t('How do I earn commissions as an affiliate?')} mt="24px">
               <StyledListText color="textSubtle">
-                {t('Pairs must be in “PancakeSwap Extended” official token list')}
+                {t('You earn commissions from most trading fees paid by your invitees for a limited period of time')}
               </StyledListText>
               <StyledListText color="textSubtle">
-                {t('Pairs must include 1 major token (POL, BNB, BTC, BUSD, ETH, USDT and USDC)')}
+                {t('Trading pairs must meet the following eligibility criteria:')}
+              </StyledListText>
+              <StyledListText ml="16px" color="textSubtle">
+                {t('Pairs must be in “PancakeSwap Extended” Official')}
+                <Link
+                  style={{ display: 'inline-block' }}
+                  external
+                  href="https://tokenlists.org/token-list?url=https://tokens.pancakeswap.finance/pancakeswap-extended.json"
+                >
+                  <Text color="primary" ml="4px" as="span">
+                    {t('token list')}
+                  </Text>
+                </Link>
+              </StyledListText>
+              <StyledListText ml="16px" color="textSubtle">
+                {t('Pairs must include 1 major token (BNB, BTC, BUSD, ETH, USDT and USDC)')}
               </StyledListText>
             </FoldableText>
             <FoldableText title={t('How will I receive my commissions and how often will I be paid?')} mt="24px">
@@ -87,7 +102,7 @@ const Question = () => {
               </StyledListText>
               <StyledListText color="textSubtle">
                 {t(
-                  'You will be able to redeem your PLAX rewards from the affiliate dashboard page. Once redeemed, PancakeSwap will transfer the commission amount earned to your designated wallet. You will be able to see the details of each payment in your affiliate dashboard, including the amount, date, and status of each payment.',
+                  'You will be able to redeem your CAKE rewards from the affiliate dashboard page. Once redeemed, PancakeSwap will transfer the commission amount earned to your designated wallet. You will be able to see the details of each payment in your affiliate dashboard, including the amount, date, and status of each payment.',
                 )}
               </StyledListText>
             </FoldableText>

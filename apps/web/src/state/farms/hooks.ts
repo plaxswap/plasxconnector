@@ -1,24 +1,20 @@
 import BigNumber from 'bignumber.js'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { SLOW_INTERVAL } from 'config/constants'
-import { useCakeBusdPrice } from 'hooks/useBUSDPrice'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from 'state'
 import useSWRImmutable from 'swr/immutable'
-import { BIG_ZERO } from '@pancakeswap/utils/bigNumber'
 import { useBCakeProxyContractAddress } from 'views/Farms/hooks/useBCakeProxyContractAddress'
-import { getMasterchefContract } from 'utils/contractHelpers'
-import { useFastRefreshEffect } from 'hooks/useRefreshEffect'
+import { getMasterChefContract } from 'utils/contractHelpers'
 import { getFarmConfig } from '@pancakeswap/farms/constants'
 import { DeserializedFarm, DeserializedFarmsState, DeserializedFarmUserData } from '@pancakeswap/farms'
 import { useActiveChainId } from 'hooks/useActiveChainId'
-import { fetchFarmsPublicDataAsync, fetchFarmUserDataAsync, fetchInitialFarmsData } from '.'
-import { State } from '../types'
+import { useCakePriceAsBN } from '@pancakeswap/utils/useCakePrice'
+
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
+import { fetchFarmsPublicDataAsync, fetchFarmUserDataAsync } from '.'
 import {
-  farmFromLpSymbolSelector,
   farmSelector,
-  makeBusdPriceFromPidSelector,
   makeFarmFromPidSelector,
   makeLpTokenPriceFromLpSymbolSelector,
   makeUserFarmFromPidSelector,
@@ -27,14 +23,23 @@ import {
 export function useFarmsLength() {
   const { chainId } = useActiveChainId()
   return useSWRImmutable(chainId ? ['farmsLength', chainId] : null, async () => {
-    const mc = getMasterchefContract(undefined, chainId)
-    return (await mc.poolLength()).toNumber()
+    const mc = getMasterChefContract(undefined, chainId)
+    return Number(await mc.read.poolLength())
+  })
+}
+
+export function useFarmV2PublicAPI() {
+  const { chainId } = useActiveChainId()
+  return useSWRImmutable(chainId ? ['farm-v2-pubic-api', chainId] : null, async () => {
+    return fetch(`https://farms-api.pancakeswap.com/${chainId}`)
+      .then((res) => res.json())
+      .then((res) => res.data)
   })
 }
 
 export const usePollFarmsWithUserData = () => {
   const dispatch = useAppDispatch()
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   const {
     proxyAddress,
     proxyCreated,
@@ -44,8 +49,9 @@ export const usePollFarmsWithUserData = () => {
   useSWRImmutable(
     chainId ? ['publicFarmData', chainId] : null,
     async () => {
-      const farmsConfig = await getFarmConfig(chainId)
+      const farmsConfig = (await getFarmConfig(chainId)) || []
       const pids = farmsConfig.map((farmToFetch) => farmToFetch.pid)
+
       dispatch(fetchFarmsPublicDataAsync({ pids, chainId }))
     },
     {
@@ -60,10 +66,9 @@ export const usePollFarmsWithUserData = () => {
   useSWRImmutable(
     account && chainId && !isProxyContractLoading ? name : null,
     async () => {
-      const farmsConfig = await getFarmConfig(chainId)
+      const farmsConfig = (await getFarmConfig(chainId)) || []
       const pids = farmsConfig.map((farmToFetch) => farmToFetch.pid)
       const params = proxyCreated ? { account, pids, proxyAddress, chainId } : { account, pids, chainId }
-
       dispatch(fetchFarmUserDataAsync(params))
     },
     {
@@ -72,42 +77,9 @@ export const usePollFarmsWithUserData = () => {
   )
 }
 
-/**
- * Fetches the "core" farm data used globally
- * 2 = CAKE-BNB LP
- * 3 = BUSD-BNB LP
- */
-const coreFarmPIDs = {
-  137: [2, 5],
-  80001: [],
-  5: [13, 11],
-  1: [124, 125],
-}
-
-export const usePollCoreFarmData = () => {
-  const dispatch = useAppDispatch()
-  const { chainId } = useActiveChainId()
-
-  useEffect(() => {
-    if (chainId) {
-      dispatch(fetchInitialFarmsData({ chainId }))
-    }
-  }, [chainId, dispatch])
-
-  useFastRefreshEffect(() => {
-    if (chainId) {
-      dispatch(fetchFarmsPublicDataAsync({ pids: coreFarmPIDs[chainId], chainId }))
-    }
-  }, [dispatch, chainId])
-}
-
 export const useFarms = (): DeserializedFarmsState => {
   const { chainId } = useActiveChainId()
   return useSelector(useMemo(() => farmSelector(chainId), [chainId]))
-}
-
-export const useFarmsPoolLength = (): number => {
-  return useSelector((state: State) => state.farms.poolLength)
 }
 
 export const useFarmFromPid = (pid: number): DeserializedFarm => {
@@ -115,20 +87,9 @@ export const useFarmFromPid = (pid: number): DeserializedFarm => {
   return useSelector(farmFromPid)
 }
 
-export const useFarmFromLpSymbol = (lpSymbol: string): DeserializedFarm => {
-  const farmFromLpSymbol = useMemo(() => farmFromLpSymbolSelector(lpSymbol), [lpSymbol])
-  return useSelector(farmFromLpSymbol)
-}
-
 export const useFarmUser = (pid): DeserializedFarmUserData => {
   const farmFromPidUser = useMemo(() => makeUserFarmFromPidSelector(pid), [pid])
   return useSelector(farmFromPidUser)
-}
-
-// Return the base token price for a farm, from a given pid
-export const useBusdPriceFromPid = (pid: number): BigNumber => {
-  const busdPriceFromPid = useMemo(() => makeBusdPriceFromPidSelector(pid), [pid])
-  return useSelector(busdPriceFromPid)
 }
 
 export const useLpTokenPrice = (symbol: string) => {
@@ -136,10 +97,6 @@ export const useLpTokenPrice = (symbol: string) => {
   return useSelector(lpTokenPriceFromLpSymbol)
 }
 
-/**
- * @deprecated use the BUSD hook in /hooks
- */
-export const usePriceCakeBusd = ({ forceMainnet } = { forceMainnet: false }): BigNumber => {
-  const price = useCakeBusdPrice({ forceMainnet })
-  return useMemo(() => (price ? new BigNumber(price.toSignificant(6)) : BIG_ZERO), [price])
+export const usePriceCakeUSD = (): BigNumber => {
+  return useCakePriceAsBN()
 }

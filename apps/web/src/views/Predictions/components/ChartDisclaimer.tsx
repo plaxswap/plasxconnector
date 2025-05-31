@@ -1,5 +1,5 @@
 import {
-  ModalContainer,
+  ModalWrapper,
   ModalBody,
   Text,
   Button,
@@ -35,7 +35,7 @@ const ChartDisclaimer: React.FC<React.PropsWithChildren<InjectedModalProps>> = (
   }
 
   return (
-    <ModalContainer $minWidth="320px">
+    <ModalWrapper minWidth="320px">
       <ModalBody p="24px" maxWidth="400px">
         <Flex justifyContent="center" mb="32px">
           <Image src="/images/predictions/chartwarning.svg" width={190} height={118} />
@@ -57,7 +57,7 @@ const ChartDisclaimer: React.FC<React.PropsWithChildren<InjectedModalProps>> = (
           {t("Only the price from Chainlink (shown on the cards) determines the round's result.")}
         </Text>
         <LinkExternal
-          href="https://docs.plaxswap.io/products/prediction/prediction-faq#what-are-you-using-for-your-price-feed"
+          href="https://docs.pancakeswap.finance/products/prediction/prediction-faq#what-are-you-using-for-your-price-feed"
           external
           mb="24px"
         >
@@ -82,7 +82,7 @@ const ChartDisclaimer: React.FC<React.PropsWithChildren<InjectedModalProps>> = (
           </Flex>
         </label>
       </ModalBody>
-    </ModalContainer>
+    </ModalWrapper>
   )
 }
 

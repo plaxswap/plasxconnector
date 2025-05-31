@@ -1,22 +1,22 @@
-import { useChainlinkOracleContract } from 'hooks/useContract'
-import { useSWRContract } from 'hooks/useSWRContract'
-import { Zero } from '@ethersproject/constants'
+import { useActiveChainId } from 'hooks/useActiveChainId'
+import { useContractRead } from 'wagmi'
+import { chainlinkOracleABI } from 'config/abi/chainlinkOracle'
 import { useConfig } from '../context/ConfigProvider'
 
-const usePollOraclePrice = (seconds = 10) => {
+const usePollOraclePrice = () => {
   const { chainlinkOracleAddress } = useConfig()
 
-  const chainlinkOracleContract = useChainlinkOracleContract(chainlinkOracleAddress, false)
-  // Can refactor to subscription later
-  const { data: price, mutate } = useSWRContract([chainlinkOracleContract, 'latestAnswer'], {
-    refreshInterval: seconds * 1000,
-    refreshWhenHidden: true,
-    refreshWhenOffline: true,
-    dedupingInterval: seconds * 1000,
-    fallbackData: Zero,
+  const { chainId } = useActiveChainId()
+
+  const { data: price = 0n, refetch } = useContractRead({
+    abi: chainlinkOracleABI,
+    address: chainlinkOracleAddress,
+    functionName: 'latestAnswer',
+    watch: true,
+    chainId,
   })
 
-  return { price, refresh: mutate }
+  return { price, refresh: refetch }
 }
 
 export default usePollOraclePrice

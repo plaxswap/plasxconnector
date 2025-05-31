@@ -1,6 +1,11 @@
 {
-  "extends": "tsconfig/react-library",
+  "extends": "@pancakeswap/tsconfig/base",
+  "include": ["./evm", "legacy-router"],
+  "exclude": ["**/*.test.ts", "./dist/**"],
   "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "target": "es2020",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

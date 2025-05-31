@@ -1,6 +1,6 @@
 import { FarmWithStakedValue } from '@pancakeswap/farms'
 import { useTranslation } from '@pancakeswap/localization'
-import { Card, ExpandableSectionButton, Farm as FarmUI, Flex, Skeleton, Text } from '@pancakeswap/uikit'
+import { Card, ExpandableSectionButton, Farm as FarmUI, Flex, Skeleton, Text, useModalV2 } from '@pancakeswap/uikit'
 import { BIG_ZERO } from '@pancakeswap/utils/bigNumber'
 import BigNumber from 'bignumber.js'
 import { BASE_ADD_LIQUIDITY_URL } from 'config'
@@ -10,6 +10,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { multiChainPaths } from 'state/info/constant'
 import styled from 'styled-components'
 import { getBlockExploreLink } from 'utils'
+import { AddLiquidityV3Modal } from 'views/AddLiquidityV3/Modal'
+import { unwrappedToken } from 'utils/wrappedCurrency'
+import { useFarmV2Multiplier } from 'views/Farms/hooks/useFarmV2Multiplier'
+import { SELECTOR_TYPE } from 'views/AddLiquidityV3/types'
 import getLiquidityUrlPathParts from 'utils/getLiquidityUrlPathParts'
 import ApyButton from './ApyButton'
 import CardActionsContainer from './CardActionsContainer'
@@ -62,6 +66,10 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
   const { chainId } = useActiveChainId()
   const [showExpandableSection, setShowExpandableSection] = useState(false)
 
+  const { totalMultipliers, getFarmCakePerSecond } = useFarmV2Multiplier()
+
+  const farmCakePerSecond = getFarmCakePerSecond(farm.poolWeight)
+
   const liquidity =
     farm?.liquidity && originalLiquidity?.gt(0) ? farm.liquidity.plus(originalLiquidity) : farm.liquidity
 
@@ -71,17 +79,17 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
       : ''
 
   const lpLabel = farm.lpSymbol && farm.lpSymbol.replace(/pancake/gi, '')
-  const earnLabel = farm.dual ? farm.dual.earnLabel : t('PLAX + Fees')
+  const earnLabel = farm.dual ? farm.dual.earnLabel : t('CAKE + Fees')
 
   const liquidityUrlPathParts = getLiquidityUrlPathParts({
     quoteTokenAddress: farm.quoteToken.address,
     tokenAddress: farm.token.address,
     chainId,
   })
-  const addLiquidityUrl = `${BASE_ADD_LIQUIDITY_URL}/${liquidityUrlPathParts}`
+  const addLiquidityUrl = `${BASE_ADD_LIQUIDITY_URL}/v2/${liquidityUrlPathParts}`
   const { lpAddress, stableSwapAddress, stableLpFee } = farm
-  const isPromotedFarm = farm.token.symbol === 'PLAX'
-  const { stakedBalance, proxy, tokenBalance } = farm.userData
+  const isPromotedFarm = farm.token.symbol === 'CAKE'
+  const { stakedBalance, proxy, tokenBalance } = farm?.userData || {}
 
   const infoUrl = useMemo(() => {
     if (farm.isStable) {
@@ -94,6 +102,8 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
     setShowExpandableSection((prev) => !prev)
   }, [])
 
+  const addLiquidityModal = useModalV2()
+
   return (
     <StyledCard isActive={isPromotedFarm}>
       <FarmCardInnerContainer>
@@ -105,12 +115,15 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
           quoteToken={farm.quoteToken}
           boosted={farm.boosted}
           isStable={farm.isStable}
+          version={2}
           pid={farm.pid}
+          farmCakePerSecond={farmCakePerSecond}
+          totalMultipliers={totalMultipliers}
         />
         {!removed && (
           <Flex justifyContent="space-between" alignItems="center">
             <Text>{t('APR')}:</Text>
-            <Text bold style={{ display: 'flex', alignItems: 'center' }}>
+            <Text style={{ display: 'flex', alignItems: 'center' }}>
               {farm.apr ? (
                 <>
                   {farm.boosted ? (
@@ -144,6 +157,8 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
                     boosted={farm.boosted}
                     stableSwapAddress={stableSwapAddress}
                     stableLpFee={stableLpFee}
+                    farmCakePerSecond={farmCakePerSecond}
+                    totalMultipliers={totalMultipliers}
                   />
                 </>
               ) : (
@@ -154,7 +169,7 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
         )}
         <Flex justifyContent="space-between">
           <Text>{t('Earn')}:</Text>
-          <Text bold>{earnLabel}</Text>
+          <Text>{earnLabel}</Text>
         </Flex>
         <CardActionsContainer
           farm={farm}
@@ -168,16 +183,27 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
       <ExpandingWrapper>
         <ExpandableSectionButton onClick={toggleExpandableSection} expanded={showExpandableSection} />
         {showExpandableSection && (
-          <DetailsSection
-            removed={removed}
-            scanAddressLink={getBlockExploreLink(lpAddress, 'address', chainId)}
-            infoAddress={infoUrl}
-            totalValueFormatted={totalValueFormatted}
-            lpLabel={lpLabel}
-            addLiquidityUrl={addLiquidityUrl}
-            isCommunity={farm.isCommunity}
-            auctionHostingEndDate={farm.auctionHostingEndDate}
-          />
+          <>
+            <AddLiquidityV3Modal
+              {...addLiquidityModal}
+              currency0={unwrappedToken(farm.token)}
+              currency1={unwrappedToken(farm.quoteToken)}
+              preferredSelectType={farm.isStable ? SELECTOR_TYPE.STABLE : SELECTOR_TYPE.V2}
+            />
+            <DetailsSection
+              removed={removed}
+              scanAddressLink={getBlockExploreLink(lpAddress, 'address', chainId)}
+              infoAddress={infoUrl}
+              totalValueFormatted={totalValueFormatted}
+              lpLabel={lpLabel}
+              onAddLiquidity={addLiquidityModal.onOpen}
+              isCommunity={farm.isCommunity}
+              auctionHostingEndDate={farm.auctionHostingEndDate}
+              multiplier={farm.multiplier}
+              farmCakePerSecond={farmCakePerSecond}
+              totalMultipliers={totalMultipliers}
+            />
+          </>
         )}
       </ExpandingWrapper>
     </StyledCard>

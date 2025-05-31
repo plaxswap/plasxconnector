@@ -1,55 +1,85 @@
-/* eslint-disable import/prefer-default-export */
-import BigNumber from 'bignumber.js'
-import poolsConfig from 'config/constants/pools'
-import sousChefV2 from 'config/abi/sousChefV2.json'
-import chunk from 'lodash/chunk'
-import { multicallv3 } from '../multicall'
-import { getAddress, getMulticallAddress } from '../addressHelpers'
-import multiCallAbi from '../../config/abi/Multicall.json'
+import { ChainId } from '@pancakeswap/sdk'
+import { getPoolsConfig } from '@pancakeswap/pools'
 
-const multicallAddress = getMulticallAddress()
+import chunk from 'lodash/chunk'
+import { publicClient } from 'utils/wagmi'
+
+const ABI = [
+  {
+    inputs: [],
+    name: 'startBlock',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'bonusEndBlock',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const
 
 /**
  * Returns the total number of pools that were active at a given block
  */
-export const getActivePools = async (block?: number) => {
+export const getActivePools = async (chainId: ChainId, block?: number) => {
+  const poolsConfig = getPoolsConfig(chainId)
   const eligiblePools = poolsConfig
     .filter((pool) => pool.sousId !== 0)
     .filter((pool) => pool.isFinished === false || pool.isFinished === undefined)
-  const startBlockCalls = eligiblePools.map(({ contractAddress }) => ({
-    abi: sousChefV2,
-    address: getAddress(contractAddress, 137),
-    name: 'startBlock',
-  }))
-  const endBlockCalls = eligiblePools.map(({ contractAddress }) => ({
-    abi: sousChefV2,
-    address: getAddress(contractAddress, 137),
-    name: 'bonusEndBlock',
-  }))
-  const blockCall = !block
-    ? {
-        abi: multiCallAbi,
-        address: multicallAddress,
-        name: 'getBlockNumber',
-      }
-    : null
+  const startBlockCalls = eligiblePools.map(
+    ({ contractAddress }) =>
+      ({
+        abi: ABI,
+        address: contractAddress,
+        functionName: 'startBlock',
+      } as const),
+  )
+  const endBlockCalls = eligiblePools.map(
+    ({ contractAddress }) =>
+      ({
+        abi: ABI,
+        address: contractAddress,
+        functionName: 'bonusEndBlock',
+      } as const),
+  )
 
-  const calls = !block ? [...startBlockCalls, ...endBlockCalls, blockCall] : [...startBlockCalls, ...endBlockCalls]
-  const resultsRaw = await multicallv3({ calls })
-  const blockNumber = block || resultsRaw.pop()[0].toNumber()
+  const calls = [...startBlockCalls, ...endBlockCalls]
+  const resultsRaw = await publicClient({ chainId }).multicall({
+    contracts: calls,
+    allowFailure: false,
+  })
+
+  const blockNumber = block ? BigInt(block) : await publicClient({ chainId }).getBlockNumber()
+
   const blockCallsRaw = chunk(resultsRaw, resultsRaw.length / 2)
-  const startBlocks: any[] = blockCallsRaw[0]
-  const endBlocks: any[] = blockCallsRaw[1]
+
+  const startBlocks = blockCallsRaw[0]
+  const endBlocks = blockCallsRaw[1]
 
   return eligiblePools.reduce((accum, poolCheck, index) => {
-    const startBlock = startBlocks[index] ? new BigNumber(startBlocks[index]) : null
-    const endBlock = endBlocks[index] ? new BigNumber(endBlocks[index]) : null
+    const startBlock = startBlocks[index] ? startBlocks[index] : null
+    const endBlock = endBlocks[index] ? endBlocks[index] : null
 
     if (!startBlock || !endBlock) {
       return accum
     }
 
-    if (startBlock.gte(blockNumber) || endBlock.lte(blockNumber)) {
+    if (startBlock >= blockNumber || endBlock <= blockNumber) {
       return accum
     }
 

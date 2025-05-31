@@ -1,12 +1,16 @@
 import shuffle from 'lodash/shuffle'
 import { ReactElement, useMemo } from 'react'
-import AptosBanner from '../AptosBanner'
+import EthBanner from '../EthBanner'
 import CompetitionBanner from '../CompetitionBanner'
 import IFOBanner from '../IFOBanner'
+import V3LaunchBanner from '../V3LaunchBanner'
 import PerpetualBanner from '../PerpetualBanner'
-import V3Banner from '../V3Banner'
+import LiquidStakingBanner from '../LiquidStakingBanner'
+import PancakeProtectorBanner from '../PancakeProtectorBanner'
+import FarmV3MigrationBanner from '../FarmV3MigrationBanner'
 import useIsRenderCompetitionBanner from './useIsRenderCompetitionBanner'
 import useIsRenderIfoBanner from './useIsRenderIFOBanner'
+import TradingRewardBanner from '../TradingRewardBanner'
 
 interface IBannerConfig {
   shouldRender: boolean
@@ -25,14 +29,19 @@ interface IBannerConfig {
  *  },
  * ```
  */
+
 export const useMultipleBannerConfig = () => {
   const isRenderIFOBanner = useIsRenderIfoBanner()
   const isRenderCompetitionBanner = useIsRenderCompetitionBanner()
 
   return useMemo(() => {
     const NO_SHUFFLE_BANNERS: IBannerConfig[] = [
-      { shouldRender: true, banner: <V3Banner /> },
-      { shouldRender: true, banner: <AptosBanner /> },
+      { shouldRender: true, banner: <PancakeProtectorBanner /> },
+      { shouldRender: true, banner: <TradingRewardBanner /> },
+      { shouldRender: true, banner: <LiquidStakingBanner /> },
+      { shouldRender: true, banner: <V3LaunchBanner /> },
+      { shouldRender: true, banner: <FarmV3MigrationBanner /> },
+      { shouldRender: true, banner: <EthBanner /> },
       {
         shouldRender: isRenderIFOBanner,
         banner: <IFOBanner />,

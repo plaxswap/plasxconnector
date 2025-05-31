@@ -1,20 +1,14 @@
 import { useMemo, useState } from 'react'
-import {
-  Flex,
-  Text,
-  InputGroup,
-  Input,
-  Box,
-  Card,
-  CopyIcon,
-  ShareIcon,
-  Button,
-  ArrowForwardIcon,
-  useMatchBreakpoints,
-} from '@pancakeswap/uikit'
-// import { useTranslation } from '@pancakeswap/localization'
+import { Flex, Text, Input, Box, Button, ArrowForwardIcon, useMatchBreakpoints, useToast } from '@pancakeswap/uikit'
 import styled from 'styled-components'
+import BigNumber from 'bignumber.js'
+import { keccak256, encodePacked } from 'viem'
+import { useAccount } from 'wagmi'
+import { useSignMessage } from '@pancakeswap/wagmi'
+import { useTranslation } from '@pancakeswap/localization'
+import useDefaultLinkId from 'views/AffiliatesProgram/hooks/useDefaultLinkId'
 import commissionList from 'views/AffiliatesProgram/utils/commisionList'
+import { InfoDetail } from 'views/AffiliatesProgram/hooks/useAuthAffiliate'
 
 const Wrapper = styled(Flex)`
   padding: 1px;
@@ -45,7 +39,7 @@ const StyledCommission = styled(Flex)`
     content: '';
     position: absolute;
     top: 50%;
-    right: 0;
+    left: 0;
     height: 60px;
     width: 1px;
     transform: translateY(-50%);
@@ -53,7 +47,7 @@ const StyledCommission = styled(Flex)`
   }
 
   ${({ theme }) => theme.mediaQueries.md} {
-    width: 124px;
+    width: 118px;
   }
 `
 
@@ -67,9 +61,10 @@ const CardInner = styled(Flex)`
   background: ${({ theme }) => theme.colors.gradientBubblegum};
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
 
   ${StyledCommission} {
-    &:nth-child(even) {
+    &:first-child {
       &:before {
         display: none;
       }
@@ -81,88 +76,159 @@ const CardInner = styled(Flex)`
   }
 `
 
-const receivePercentageList: Array<string> = ['0', '10', '25', '50']
+interface MyReferralLinkProps {
+  affiliate: InfoDetail
+  refreshAffiliateInfo: () => void
+}
 
-const MyReferralLink = () => {
-  // const { t } = useTranslation()
+const receivePercentageList: Array<string> = ['0', '25', '50', '75', '100']
+
+const MyReferralLink: React.FC<React.PropsWithChildren<MyReferralLinkProps>> = ({
+  affiliate,
+  refreshAffiliateInfo,
+}) => {
+  const { t } = useTranslation()
+  const { address } = useAccount()
+  const { toastSuccess, toastError } = useToast()
+  const { signMessageAsync } = useSignMessage()
+  const { defaultLinkId, refresh } = useDefaultLinkId()
+  const [note, setNote] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const { isMobile } = useMatchBreakpoints()
   const [percentage, setPercentage] = useState('0')
 
-  const dataList = useMemo(() => commissionList.filter((i) => i.percentage !== '?'), [])
+  const youWillReceive = useMemo(() => new BigNumber(100).minus(percentage).toString(), [percentage])
+
+  const dataList = useMemo(
+    () => commissionList.filter((i) => i.percentage !== '?' || (i.id === 'perpetual' && affiliate.ablePerps)),
+    [affiliate],
+  )
+
+  const linkId = useMemo(() => note || defaultLinkId, [note, defaultLinkId])
+
+  const handleGenerateLink = async () => {
+    try {
+      setIsLoading(true)
+
+      const message = keccak256(
+        encodePacked(
+          ['string', 'uint256', 'uint256', 'uint256'],
+          [linkId, BigInt(percentage), BigInt(percentage), BigInt(percentage)],
+        ),
+      )
+      const signature = await signMessageAsync({ message })
+
+      const data = {
+        fee: {
+          linkId,
+          signature,
+          address,
+          v2SwapFee: Number(percentage),
+          v3SwapFee: Number(percentage),
+          stableSwapFee: Number(percentage),
+        },
+      }
+
+      const response = await fetch('/api/affiliates-program/affiliate-fee-create', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      const result = await response.json()
+
+      if (result.status === 'success') {
+        await Promise.all([refreshAffiliateInfo(), refresh()])
+        setNote('')
+        toastSuccess(t('Referral Link Created'))
+      } else {
+        toastError(result.error)
+      }
+    } catch (error) {
+      console.error(`Submit Create Fee Error: ${error}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const textValue = e.target.value
+    const reg = /^[a-zA-Z0-9]+$/
+    if (reg.test(textValue) || textValue === '') {
+      setNote(textValue)
+    }
+  }
 
   return (
-    <Box
-      width={['100%', '100%', '100%', '100%', '100%', '700px']}
-      m={['32px 0 0 0', '32px 0 0 0', '32px 0 0 0', '32px 0 0 0', '32px 0 0 0', '0 0 0 32px']}
-    >
-      <Card>
-        <Box padding={['24px']}>
-          <Text bold mb={['17px']} color="secondary" fontSize="12px" textTransform="uppercase">
-            create a new link
-          </Text>
-          <Flex mb="24px">
-            <InputGroup endIcon={<CopyIcon width="18px" color="textSubtle" />} scale="lg">
-              <Input type="text" placeholder="http://" />
-            </InputGroup>
-            <ShareIcon width={24} height={24} ml="16px" color="primary" />
-          </Flex>
-          <Flex flexDirection={['column', 'column', 'column', 'column', 'column', 'row']} mb="36px">
-            <Flex alignSelf="center" width={['100%', '320px']} justifyContent={['space-between']}>
-              <Box>
-                <Text fontSize="14px" color="textSubtle">
-                  You will receive
-                </Text>
-                <Text color="secondary" bold fontSize={['32px']} textAlign="center">
-                  100%
-                </Text>
-              </Box>
-              <ArrowForwardIcon color="textSubtle" style={{ alignSelf: 'center' }} />
-              <Box>
-                <Text fontSize="14px" color="textSubtle">
-                  Friends will receive
-                </Text>
-                <Text color="primary" bold fontSize={['32px']} textAlign="center">
-                  0%
-                </Text>
-              </Box>
-            </Flex>
-            <Wrapper>
-              <CardInner>
-                {dataList.map((list) => (
-                  <StyledCommission key={list.image.url}>
-                    <Text fontSize="12px" textAlign="center" bold color="secondary" textTransform="uppercase">
-                      {list.title}
-                    </Text>
-                    <Text fontSize={['32px']} bold>
-                      {list.percentage}
-                    </Text>
-                  </StyledCommission>
-                ))}
-              </CardInner>
-            </Wrapper>
-          </Flex>
-          <Flex flexDirection={['column', 'column', 'column', 'row']}>
-            <Flex mb={['8px', '8px', '8px', '0']}>
-              {receivePercentageList.map((list) => (
-                <Button
-                  scale={isMobile ? 'sm' : 'md'}
-                  width={`${100 / receivePercentageList.length}%`}
-                  key={list}
-                  mr="8px"
-                  variant={list === percentage ? 'primary' : 'tertiary'}
-                  onClick={() => setPercentage(list)}
-                >
-                  {`${list}%`}
-                </Button>
+    <Box>
+      <Text bold mb={['17px']} color="secondary" fontSize="12px" textTransform="uppercase">
+        {t('create a new link')}
+      </Text>
+      <Flex mb="24px">
+        <Input
+          scale="lg"
+          maxLength={20}
+          value={note}
+          type="text"
+          placeholder="Note (20 characters)"
+          onChange={handleInput}
+        />
+      </Flex>
+      <Flex flexDirection={['column', 'column', 'column', 'column', 'column', 'row']} mb="36px">
+        <Flex alignSelf="center" width={['100%', '320px']} justifyContent={['space-between']}>
+          <Box>
+            <Text fontSize="14px" color="textSubtle">
+              {t('You will receive')}
+            </Text>
+            <Text color="secondary" bold fontSize={['32px']} textAlign="center">
+              {`${youWillReceive}%`}
+            </Text>
+          </Box>
+          <ArrowForwardIcon color="textSubtle" style={{ alignSelf: 'center' }} />
+          <Box>
+            <Text fontSize="14px" color="textSubtle">
+              {t('Friends will receive')}
+            </Text>
+            <Text color="primary" bold fontSize={['32px']} textAlign="center">
+              {`${percentage}%`}
+            </Text>
+          </Box>
+        </Flex>
+        <Wrapper>
+          <CardInner>
+            {dataList &&
+              dataList.map((list) => (
+                <StyledCommission key={list.id}>
+                  <Flex>
+                    <Box>
+                      <Text fontSize="12px" textAlign="center" bold color="secondary" textTransform="uppercase">
+                        {list.title}
+                      </Text>
+                      <Text textAlign="center" fontSize={['32px']} bold>
+                        {list.percentage}
+                      </Text>
+                    </Box>
+                  </Flex>
+                </StyledCommission>
               ))}
-            </Flex>
-            <Input scale="lg" type="text" maxLength={100} placeholder="Note (100 characters)" />
-          </Flex>
-          <Button mt="24px" width="100%">
-            Generate a referral link
+          </CardInner>
+        </Wrapper>
+      </Flex>
+      <Flex mb={['8px', '8px', '8px', '0']}>
+        {receivePercentageList.map((list) => (
+          <Button
+            scale={isMobile ? 'sm' : 'md'}
+            width={`${100 / receivePercentageList.length}%`}
+            key={list}
+            mr="8px"
+            variant={list === percentage ? 'primary' : 'tertiary'}
+            onClick={() => setPercentage(list)}
+          >
+            {`${list}%`}
           </Button>
-        </Box>
-      </Card>
+        ))}
+      </Flex>
+      <Button mt="24px" width="100%" disabled={isLoading} onClick={handleGenerateLink}>
+        {t('Generate a referral link')}
+      </Button>
     </Box>
   )
 }

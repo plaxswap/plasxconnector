@@ -20,6 +20,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useProfile } from 'state/profile/hooks'
 import { usePendingTransactions } from 'state/transactions/hooks'
 import { useAccount } from 'wagmi'
+import { useDomainNameForAddress } from 'hooks/useDomain'
 import ProfileUserMenuItem from './ProfileUserMenuItem'
 import WalletModal, { WalletView } from './WalletModal'
 import WalletUserMenuItem from './WalletUserMenuItem'
@@ -53,9 +54,7 @@ const UserMenuItems = () => {
       </UserMenuItem>
       <UserMenuDivider />
       <NextLink href={`/profile/${account?.toLowerCase()}`} passHref>
-        <UserMenuItem as="a" disabled={isWrongNetwork || chainId !== ChainId.BSC}>
-          {t('Your NFTs')}
-        </UserMenuItem>
+        <UserMenuItem disabled={isWrongNetwork || chainId !== ChainId.BSC}>{t('Your NFTs')}</UserMenuItem>
       </NextLink>
       <ProfileUserMenuItem
         isLoading={isLoading}
@@ -76,10 +75,11 @@ const UserMenuItems = () => {
 const UserMenu = () => {
   const { t } = useTranslation()
   const { address: account } = useAccount()
+  const { domainName, avatar } = useDomainNameForAddress(account)
   const { isWrongNetwork } = useActiveChainId()
   const { hasPendingTransactions, pendingNumber } = usePendingTransactions()
   const { profile } = useProfile()
-  const avatarSrc = profile?.nft?.image?.thumbnail
+  const avatarSrc = profile?.nft?.image?.thumbnail ?? avatar
   const [userMenuText, setUserMenuText] = useState<string>('')
   const [userMenuVariable, setUserMenuVariable] = useState<UserMenuVariant>('default')
 
@@ -95,7 +95,13 @@ const UserMenu = () => {
 
   if (account) {
     return (
-      <UIKitUserMenu account={account} avatarSrc={avatarSrc} text={userMenuText} variant={userMenuVariable}>
+      <UIKitUserMenu
+        account={domainName || account}
+        ellipsis={!domainName}
+        avatarSrc={avatarSrc}
+        text={userMenuText}
+        variant={userMenuVariable}
+      >
         {({ isOpen }) => (isOpen ? <UserMenuItems /> : null)}
       </UIKitUserMenu>
     )

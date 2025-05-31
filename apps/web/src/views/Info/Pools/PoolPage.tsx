@@ -1,5 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { useTranslation } from '@pancakeswap/localization'
+import { ChainId } from '@pancakeswap/sdk'
 import {
   Box,
   Breadcrumbs,
@@ -17,24 +18,25 @@ import {
   useMatchBreakpoints,
   useTooltip,
 } from '@pancakeswap/uikit'
-import { ChainId } from '@pancakeswap/sdk'
-import { NextSeo } from 'next-seo'
-import { CHAIN_QUERY_NAME } from 'config/chains'
-import { useActiveChainId } from 'hooks/useActiveChainId'
+import BigNumber from 'bignumber.js'
 import Page from 'components/Layout/Page'
-import { useState, useMemo } from 'react'
-import { checkIsStableSwap, multiChainId, multiChainScan } from 'state/info/constant'
+import { CHAIN_QUERY_NAME } from 'config/chains'
+import useInfoUserSavedTokensAndPools from 'hooks/useInfoUserSavedTokensAndPoolsList'
 import { useStableSwapAPR } from 'hooks/useStableSwapAPR'
+import { NextSeo } from 'next-seo'
+import { useMemo, useState } from 'react'
+import { checkIsStableSwap, multiChainId, multiChainScan } from 'state/info/constant'
 import {
-  useGetChainName,
+  useChainIdByQuery,
+  useChainNameByQuery,
   useMultiChainPath,
   usePoolChartDataSWR,
   usePoolDatasSWR,
   usePoolTransactionsSWR,
   useStableSwapPath,
 } from 'state/info/hooks'
-import { useWatchlistPools } from 'state/user/hooks'
 import styled from 'styled-components'
+import useSWRImmutable from 'swr/immutable'
 import { getBlockExploreLink } from 'utils'
 import { formatAmount } from 'utils/formatInfoNumbers'
 import { CurrencyLogo, DoubleCurrencyLogo } from 'views/Info/components/CurrencyLogo'
@@ -42,8 +44,6 @@ import ChartCard from 'views/Info/components/InfoCharts/ChartCard'
 import TransactionTable from 'views/Info/components/InfoTables/TransactionsTable'
 import Percent from 'views/Info/components/Percent'
 import SaveIcon from 'views/Info/components/SaveIcon'
-import useSWRImmutable from 'swr/immutable'
-import BigNumber from 'bignumber.js'
 
 const ContentLayout = styled.div`
   display: grid;
@@ -84,7 +84,6 @@ const getFarmConfig = async (chainId: number) => {
 const PoolPage: React.FC<React.PropsWithChildren<{ address: string }>> = ({ address: routeAddress }) => {
   const { isXs, isSm } = useMatchBreakpoints()
   const { t } = useTranslation()
-  const { chainId } = useActiveChainId()
   const [showWeeklyData, setShowWeeklyData] = useState(0)
   const { tooltip, tooltipVisible, targetRef } = useTooltip(
     t(`Based on last 7 days' performance. Does not account for impermanent loss`),
@@ -97,9 +96,9 @@ const PoolPage: React.FC<React.PropsWithChildren<{ address: string }>> = ({ addr
   const poolData = usePoolDatasSWR(useMemo(() => [address], [address]))[0]
   const chartData = usePoolChartDataSWR(address)
   const transactions = usePoolTransactionsSWR(address)
-
-  const [watchlistPools, addPoolToWatchlist] = useWatchlistPools()
-  const chainName = useGetChainName()
+  const chainId = useChainIdByQuery()
+  const { savedPools, addPool } = useInfoUserSavedTokensAndPools(chainId)
+  const chainName = useChainNameByQuery()
   const chainPath = useMultiChainPath()
   const infoTypeParam = useStableSwapPath()
   const isStableSwap = checkIsStableSwap()
@@ -122,6 +121,10 @@ const PoolPage: React.FC<React.PropsWithChildren<{ address: string }>> = ({ addr
     () => (isStableSwap ? new BigNumber(feeDisplay).times(2).toNumber() : 0),
     [isStableSwap, feeDisplay],
   )
+
+  const hasSmallDifference = useMemo(() => {
+    return poolData ? Math.abs(poolData.token1Price - poolData.token0Price) < 1 : false
+  }, [poolData])
 
   return (
     <Page>
@@ -148,7 +151,7 @@ const PoolPage: React.FC<React.PropsWithChildren<{ address: string }>> = ({ addr
               >
                 {t('View on %site%', { site: multiChainScan[chainName] })}
               </LinkExternal>
-              <SaveIcon fill={watchlistPools.includes(address)} onClick={() => addPoolToWatchlist(address)} />
+              <SaveIcon fill={savedPools.includes(address)} onClick={() => addPool(address)} />
             </Flex>
           </Flex>
           <Flex flexDirection="column">
@@ -175,7 +178,7 @@ const PoolPage: React.FC<React.PropsWithChildren<{ address: string }>> = ({ addr
                       {`1 ${poolData.token0.symbol} =  ${formatAmount(poolData.token1Price, {
                         notation: 'standard',
                         displayThreshold: 0.001,
-                        tokenPrecision: true,
+                        tokenPrecision: hasSmallDifference ? 'enhanced' : 'normal',
                       })} ${poolData.token1.symbol}`}
                     </Text>
                   </TokenButton>
@@ -187,7 +190,7 @@ const PoolPage: React.FC<React.PropsWithChildren<{ address: string }>> = ({ addr
                       {`1 ${poolData.token1.symbol} =  ${formatAmount(poolData.token0Price, {
                         notation: 'standard',
                         displayThreshold: 0.001,
-                        tokenPrecision: true,
+                        tokenPrecision: hasSmallDifference ? 'enhanced' : 'normal',
                       })} ${poolData.token0.symbol}`}
                     </Text>
                   </TokenButton>

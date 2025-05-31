@@ -8,20 +8,22 @@ import {
   UserMenuItem,
   Text,
   NextLinkFromReactRouter,
+  Message,
+  MessageText,
 } from '@pancakeswap/uikit'
-import { useCallback } from 'react'
-import { useSwitchNetwork } from 'hooks/useSwitchNetwork'
+import { useCallback, useMemo } from 'react'
+import {} from 'hooks/useSwitchNetwork'
 import { ChainId } from '@pancakeswap/sdk'
 import { useTranslation } from '@pancakeswap/localization'
 import { useRouter } from 'next/router'
 import styled from 'styled-components'
 import Search from 'views/Info/components/InfoSearch'
-import { useMultiChainPath, useGetChainName } from 'state/info/hooks'
+import { useMultiChainPath, useChainNameByQuery, useChainIdByQuery } from 'state/info/hooks'
 import { multiChainId, multiChainPaths } from 'state/info/constant'
 import { chains } from 'utils/wagmi'
 import { ChainLogo } from 'components/Logo/ChainLogo'
-import { useAccount } from 'wagmi'
-import { polygon, mainnet } from 'wagmi/chains'
+import { bsc, mainnet } from 'wagmi/chains'
+import { ASSET_CDN } from 'config/constants/endpoints'
 
 const NavWrapper = styled(Flex)`
   background: ${({ theme }) => theme.colors.gradientCardHeader};
@@ -39,68 +41,83 @@ const InfoNav: React.FC<{ isStableSwap: boolean }> = ({ isStableSwap }) => {
   const { t } = useTranslation()
   const router = useRouter()
   const chainPath = useMultiChainPath()
-  const { address: account } = useAccount()
-
-  const isPairs = router.pathname === `/info${chainPath && `/[chainName]`}/pairs`
-  const isTokens = router.pathname === `/info${chainPath && `/[chainName]`}/tokens`
+  const chainId = useChainIdByQuery()
   const stableSwapQuery = isStableSwap ? '?type=stableSwap' : ''
-  let activeIndex = 0
-  if (isPairs) {
-    activeIndex = 1
-  }
-  if (isTokens) {
-    activeIndex = 2
-  }
+  const activeIndex = useMemo(() => {
+    if (router?.pathname?.includes('/pairs')) {
+      return 1
+    }
+    if (router?.pathname?.includes('/tokens')) {
+      return 2
+    }
+    return 0
+  }, [router.pathname])
   return (
-    <NavWrapper>
-      <Flex>
-        <Box>
-          <ButtonMenu activeIndex={activeIndex} scale="sm" variant="subtle">
-            <ButtonMenuItem as={NextLinkFromReactRouter} to={`/info${chainPath}${stableSwapQuery}`}>
-              {t('Overview')}
-            </ButtonMenuItem>
-            <ButtonMenuItem as={NextLinkFromReactRouter} to={`/info${chainPath}/pairs${stableSwapQuery}`}>
-              {t('Pairs')}
-            </ButtonMenuItem>
-            <ButtonMenuItem as={NextLinkFromReactRouter} to={`/info${chainPath}/tokens${stableSwapQuery}`}>
-              {t('Tokens')}
-            </ButtonMenuItem>
-          </ButtonMenu>
+    <>
+      <NavWrapper>
+        <Flex>
+          <Box>
+            <ButtonMenu activeIndex={activeIndex} scale="sm" variant="subtle">
+              <ButtonMenuItem as={NextLinkFromReactRouter} to={`/info${chainPath}${stableSwapQuery}`}>
+                {t('Overview')}
+              </ButtonMenuItem>
+              <ButtonMenuItem as={NextLinkFromReactRouter} to={`/info${chainPath}/pairs${stableSwapQuery}`}>
+                {t('Pairs')}
+              </ButtonMenuItem>
+              <ButtonMenuItem as={NextLinkFromReactRouter} to={`/info${chainPath}/tokens${stableSwapQuery}`}>
+                {t('Tokens')}
+              </ButtonMenuItem>
+            </ButtonMenu>
+          </Box>
+          <NetworkSwitcher activeIndex={activeIndex} />
+        </Flex>
+        <Box width={['100%', '100%', '250px']}>
+          <Search />
         </Box>
-        {!account && <NetworkSwitcher activeIndex={activeIndex} />}
-      </Flex>
-      <Box width={['100%', '100%', '250px']}>
-        <Search />
-      </Box>
-    </NavWrapper>
+      </NavWrapper>
+      {chainId === ChainId.BSC && !isStableSwap && (
+        <Box maxWidth="1200px" m="0 auto">
+          <Message my="24px" mx="24px" variant="warning">
+            <MessageText fontSize="17px">
+              <Text color="warning" as="span">
+                {t(
+                  'The markets for some of the newer and low-cap tokens displayed on the v2 info page are highly volatile, and as a result, token information may not be accurate.',
+                )}
+              </Text>
+              <Text color="warning" ml="4px" bold as="span">
+                {t('Before trading any token, please DYOR, and pay attention to the risk scanner.')}
+              </Text>
+            </MessageText>
+          </Message>
+        </Box>
+      )}
+    </>
   )
 }
 
-const targetChains = [mainnet, polygon]
+const targetChains = [mainnet, bsc]
 
 export const NetworkSwitcher: React.FC<{ activeIndex: number }> = ({ activeIndex }) => {
   const { t } = useTranslation()
-  const chainName = useGetChainName()
+  const chainName = useChainNameByQuery()
   const foundChain = chains.find((d) => d.id === multiChainId[chainName])
   const symbol = foundChain?.nativeCurrency?.symbol
   const router = useRouter()
-  const { switchNetworkAsync } = useSwitchNetwork()
   const switchNetwork = useCallback(
     (chianId: number) => {
       const chainPath = multiChainPaths[chianId]
       if (activeIndex === 0) router.push(`/info${chainPath}`)
       if (activeIndex === 1) router.push(`/info${chainPath}/pairs`)
       if (activeIndex === 2) router.push(`/info${chainPath}/tokens`)
-      switchNetworkAsync(chianId)
     },
-    [router, activeIndex, switchNetworkAsync],
+    [router, activeIndex],
   )
 
   return (
     <UserMenu
       alignItems="top"
       ml="8px"
-      avatarSrc={`/images/chains/${multiChainId[chainName]}.png`}
+      avatarSrc={`${ASSET_CDN}/images/chains/${multiChainId[chainName]}.png`}
       text={
         foundChain ? (
           <>

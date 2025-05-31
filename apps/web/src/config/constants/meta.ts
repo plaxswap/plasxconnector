@@ -4,10 +4,10 @@ import { PageMeta } from './types'
 import { ASSET_CDN } from './endpoints'
 
 export const DEFAULT_META: PageMeta = {
-  title: 'Plaxswap',
+  title: 'PancakeSwap',
   description:
-    'The most popular AMM on Polygon by user count! Earn PLAX through yield farming or win it in the Lottery, then stake it in Syrup Pools to earn more tokens! Initial Farm Offerings (new token launch model pioneered by Plaxswap), NFTs, and more, on a platform you can trust.',
-  image: `${ASSET_CDN}/web/og/hero.jpg`,
+    'The most popular AMM on BSC by user count! Earn CAKE through yield farming or win it in the Lottery, then stake it in Syrup Pools to earn more tokens! Initial Farm Offerings (new token launch model pioneered by PancakeSwap), NFTs, and more, on a platform you can trust.',
+  image: `${ASSET_CDN}/images/og/hero.jpg`,
 }
 
 interface PathList {
@@ -56,7 +56,7 @@ const getPathList = (t: ContextApi['t']): PathList => {
       '/nfts/collections': { basePath: true, title: t('Collections'), image: `${ASSET_CDN}/web/og/nft.jpg` },
       '/nfts/activity': { title: t('Activity'), image: `${ASSET_CDN}/web/og/nft.jpg` },
       '/profile': { basePath: true, title: t('Profile') },
-      '/pancake-squad': { basePath: true, title: t('Plaxswap Squad') },
+      '/pancake-squad': { basePath: true, title: t('Pancake Squad') },
       '/pottery': { basePath: true, title: t('Pottery'), image: `${ASSET_CDN}/web/og/pottery.jpg` },
     },
     defaultTitleSuffix: t('PancakeSwap'),

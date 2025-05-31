@@ -12,13 +12,13 @@ const eventsMock: Event[] = [
   {
     status: "past",
     text: "Get Ready",
-    infoText: "Activate your profile and make sure you have at least 5 POL in your wallet to buy a Minting Ticket.",
+    infoText: "Activate your profile and make sure you have at least 5 BNB in your wallet to buy a Minting Ticket.",
   },
   {
     status: "live",
     text: "Pre-Sale: Now Live",
     infoText:
-      "During this phase, any wallet holding a Minting Ticket can redeem their ticket to mint a Plaxswap Squad NFT.",
+      "During this phase, any wallet holding a Minting Ticket can redeem their ticket to mint a Pancake Squad NFT.",
   },
   {
     status: "upcoming",

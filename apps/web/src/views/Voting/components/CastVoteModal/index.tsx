@@ -1,7 +1,6 @@
 import { useTranslation } from '@pancakeswap/localization'
 import { Box, Modal, useToast } from '@pancakeswap/uikit'
-import { useWeb3LibraryContext } from '@pancakeswap/wagmi'
-import { useAccount } from 'wagmi'
+import { useAccount, useWalletClient } from 'wagmi'
 import snapshot from '@snapshot-labs/snapshot.js'
 import useTheme from 'hooks/useTheme'
 import { useState } from 'react'
@@ -24,8 +23,8 @@ const CastVoteModal: React.FC<React.PropsWithChildren<CastVoteModalProps>> = ({
   const [view, setView] = useState<ConfirmVoteView>(ConfirmVoteView.MAIN)
   const [isPending, setIsPending] = useState(false)
   const { address: account } = useAccount()
+  const { data: signer } = useWalletClient()
   const { t } = useTranslation()
-  const library = useWeb3LibraryContext()
   const { toastError } = useToast()
   const { theme } = useTheme()
   const {
@@ -58,8 +57,22 @@ const CastVoteModal: React.FC<React.PropsWithChildren<CastVoteModalProps>> = ({
   const handleConfirmVote = async () => {
     try {
       setIsPending(true)
+      const web3 = {
+        getSigner: () => {
+          return {
+            _signTypedData: (domain, types, message) =>
+              signer.signTypedData({
+                account,
+                domain,
+                types,
+                message,
+                primaryType: 'Vote',
+              }),
+          }
+        },
+      }
 
-      await client.vote(library as any, account, {
+      await client.vote(web3 as any, account, {
         space: PANCAKE_SPACE,
         choice: vote.value,
         reason: '',

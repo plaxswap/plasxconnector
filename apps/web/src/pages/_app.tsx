@@ -72,7 +72,7 @@ function MyApp(props: AppProps<{ initialReduxState: any }>) {
         />
         <meta
           name="description"
-          content="Cheaper and faster than Uniswap? Discover Plaxswap, the leading DEX on Polygon Chain (Polygon) with the best farms in DeFi and a lottery for PLAX."
+          content="Cheaper and faster than Uniswap? Discover PancakeSwap, the leading DEX on BNB Smart Chain (BSC) with the best farms in DeFi and a lottery for CAKE."
         />
         <meta name="theme-color" content="#1FC7D4" />
         {(Component as NextPageWithLayout).mp && (
@@ -120,7 +120,7 @@ function MyApp(props: AppProps<{ initialReduxState: any }>) {
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','customDataLayer','${process.env.NEXT_PUBLIC_NEW_GTAG}');
+})(window,document,'script','dataLayer','${process.env.NEXT_PUBLIC_NEW_GTAG}');
           `,
         }}
       />

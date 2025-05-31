@@ -80,7 +80,7 @@ const Menu = () => {
                 <Button
                   variant="subtle"
                   as="a"
-                  href="https://docs.plaxswap.io/products/prediction"
+                  href="https://docs.pancakeswap.finance/products/prediction"
                   target="_blank"
                   rel="noreferrer noopener"
                   width="48px"
@@ -90,7 +90,7 @@ const Menu = () => {
               </HelpButtonWrapper>
               <LeaderboardButtonWrapper>
                 <Link href="/prediction/leaderboard" passHref>
-                  <Button as="a" variant="subtle" width="48px">
+                  <Button variant="subtle" width="48px">
                     <PrizeIcon color="white" />
                   </Button>
                 </Link>

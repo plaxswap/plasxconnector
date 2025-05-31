@@ -4,6 +4,7 @@ on:
   pull_request:
     paths-ignore:
       - 'apps/web/src/config/**'
+      - 'packages/pools/src/**'
 
 jobs:
   test:
@@ -11,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        node: [16]
+        node: [18]
     name: Config (Jest)
     steps:
       - run: 'echo "No Test Config required" '

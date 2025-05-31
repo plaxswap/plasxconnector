@@ -2,54 +2,42 @@
 /* eslint-disable no-restricted-syntax */
 import path from 'path'
 import fs from 'fs'
-import farm137 from '../constants/137'
-import farm80001 from '../constants/80001'
+import farm1 from '../constants/1'
+import farm5 from '../constants/5'
+import farm97 from '../constants/97'
+import farm56 from '../constants/56'
 
-import lpHelpers80001 from '../constants/priceHelperLps/80001'
-import lpHelpers137 from '../constants/priceHelperLps/137'
+import lpHelpers1 from '../constants/priceHelperLps/1'
+import lpHelpers5 from '../constants/priceHelperLps/5'
+import lpHelpers97 from '../constants/priceHelperLps/97'
+import lpHelpers56 from '../constants/priceHelperLps/56'
 
 const chains = [
-  [137, farm137, lpHelpers137],
-  [80001, farm80001, lpHelpers80001],
+  [1, farm1, lpHelpers1],
+  [5, farm5, lpHelpers5],
+  [56, farm56, lpHelpers56],
+  [97, farm97, lpHelpers97],
 ]
 
 export const saveList = async () => {
   console.info('save farm config...')
-  const listsDir = path.resolve('lists')
-  const priceHelperLpsDir = path.resolve('lists/priceHelperLps')
-  
   try {
-    if (!fs.existsSync(listsDir)) {
-      fs.mkdirSync(listsDir, { recursive: true })
-    }
-    if (!fs.existsSync(priceHelperLpsDir)) {
-      fs.mkdirSync(priceHelperLpsDir, { recursive: true })
-    }
+    fs.mkdirSync(`${path.resolve()}/lists`)
+    fs.mkdirSync(`${path.resolve()}/lists/priceHelperLps`)
   } catch (error) {
-    console.error('Error creating directories:', error)
-    throw error
+    //
   }
-
   for (const [chain, farm, lpHelper] of chains) {
-    try {
-      console.info('Starting build farm config', chain)
-      const farmListPath = path.join(listsDir, `${chain}.json`)
-      const stringifiedList = JSON.stringify(farm, null, 2)
-      fs.writeFileSync(farmListPath, stringifiedList)
-      console.info('Farm list saved to ', farmListPath)
-
-      const lpPriceHelperListPath = path.join(priceHelperLpsDir, `${chain}.json`)
-      const stringifiedHelperList = JSON.stringify(lpHelper, null, 2)
-      fs.writeFileSync(lpPriceHelperListPath, stringifiedHelperList)
-      console.info('Lp list saved to ', lpPriceHelperListPath)
-    } catch (error) {
-      console.error(`Error processing chain ${chain}:`, error)
-      throw error
-    }
+    console.info('Starting build farm config', chain)
+    const farmListPath = `${path.resolve()}/lists/${chain}.json`
+    const stringifiedList = JSON.stringify(farm, null, 2)
+    fs.writeFileSync(farmListPath, stringifiedList)
+    console.info('Farm list saved to ', farmListPath)
+    const lpPriceHelperListPath = `${path.resolve()}/lists/priceHelperLps/${chain}.json`
+    const stringifiedHelperList = JSON.stringify(lpHelper, null, 2)
+    fs.writeFileSync(lpPriceHelperListPath, stringifiedHelperList)
+    console.info('Lp list saved to ', lpPriceHelperListPath)
   }
 }
 
-saveList().catch((error) => {
-  console.error('Build failed:', error)
-  process.exit(1)
-})
+saveList()

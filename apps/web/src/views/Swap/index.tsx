@@ -3,31 +3,47 @@ import { Currency } from '@pancakeswap/sdk'
 import { BottomDrawer, Flex, Modal, ModalV2, useMatchBreakpoints } from '@pancakeswap/uikit'
 import replaceBrowserHistory from '@pancakeswap/utils/replaceBrowserHistory'
 import { AppBody } from 'components/App'
-import { useCallback, useContext } from 'react'
+import { useRouter } from 'next/router'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { useSwapActionHandlers } from 'state/swap/useSwapActionHandlers'
 import { currencyId } from 'utils/currencyId'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useSwapHotTokenDisplay } from 'hooks/useSwapHotTokenDisplay'
-import { useCurrency } from '../../hooks/Tokens'
-import { Field } from '../../state/swap/actions'
-import { useSingleTokenSwapInfo, useSwapState } from '../../state/swap/hooks'
+import { useCurrency } from 'hooks/Tokens'
+import { Field } from 'state/swap/actions'
+import { useDefaultsFromURLSearch, useSingleTokenSwapInfo, useSwapState } from 'state/swap/hooks'
 import Page from '../Page'
 import PriceChartContainer from './components/Chart/PriceChartContainer'
 import HotTokenList from './components/HotTokenList'
 import useWarningImport from './hooks/useWarningImport'
-import { SmartSwapForm } from './SmartSwap'
+import { V3SwapForm } from './V3Swap'
 import { StyledInputCurrencyWrapper, StyledSwapContainer } from './styles'
 import { SwapFeaturesContext } from './SwapFeaturesContext'
 
-const queryClient = new QueryClient()
-
 export default function Swap() {
+  const { query } = useRouter()
   const { isDesktop } = useMatchBreakpoints()
   const { isChartExpanded, isChartDisplayed, setIsChartDisplayed, setIsChartExpanded, isChartSupported } =
     useContext(SwapFeaturesContext)
   const [isSwapHotTokenDisplay, setIsSwapHotTokenDisplay] = useSwapHotTokenDisplay()
   const { t } = useTranslation()
+  const [firstTime, setFirstTime] = useState(true)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const toggleChartDisplayed = () => {
+    setIsChartDisplayed((currentIsChartDisplayed) => !currentIsChartDisplayed)
+  }
+
+  useEffect(() => {
+    if (firstTime && query.showTradingReward) {
+      setFirstTime(false)
+      setIsSwapHotTokenDisplay(true)
+
+      if (!isSwapHotTokenDisplay && isChartDisplayed) {
+        toggleChartDisplayed()
+      }
+    }
+  }, [firstTime, isChartDisplayed, isSwapHotTokenDisplay, query, setIsSwapHotTokenDisplay, toggleChartDisplayed])
 
   // swap state & price data
   const {
@@ -44,6 +60,7 @@ export default function Swap() {
 
   const singleTokenPrice = useSingleTokenSwapInfo(inputCurrencyId, inputCurrency, outputCurrencyId, outputCurrency)
   const warningSwapHandler = useWarningImport()
+  useDefaultsFromURLSearch()
   const { onCurrencySelection } = useSwapActionHandlers()
 
   const handleOutputSelect = useCallback(
@@ -97,7 +114,6 @@ export default function Swap() {
           />
         )}
         {isDesktop && isSwapHotTokenDisplay && <HotTokenList handleOutputSelect={handleOutputSelect} />}
-        {/* {isDesktop && isSwapHotTokenDisplay} */}
         <ModalV2 isOpen={!isDesktop && isSwapHotTokenDisplay} onDismiss={() => setIsSwapHotTokenDisplay(false)}>
           <Modal
             style={{ padding: 0 }}
@@ -117,9 +133,7 @@ export default function Swap() {
           <StyledSwapContainer $isChartExpanded={isChartExpanded}>
             <StyledInputCurrencyWrapper mt={isChartExpanded ? '24px' : '0'}>
               <AppBody>
-                <QueryClientProvider client={queryClient}>
-                  <SmartSwapForm handleOutputSelect={handleOutputSelect} />
-                </QueryClientProvider>
+                <V3SwapForm />
               </AppBody>
             </StyledInputCurrencyWrapper>
           </StyledSwapContainer>

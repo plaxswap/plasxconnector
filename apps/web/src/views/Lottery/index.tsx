@@ -5,6 +5,7 @@ import { LotteryStatus } from 'config/constants/types'
 import { useTranslation } from '@pancakeswap/localization'
 import useTheme from 'hooks/useTheme'
 import { useFetchLottery, useLottery } from 'state/lottery/hooks'
+import { LotterySubgraphHealthIndicator } from 'components/SubgraphHealthIndicator'
 import {
   TITLE_BG,
   GET_TICKETS_BG,
@@ -51,7 +52,7 @@ const Lottery = () => {
           containerProps={{ style: { marginTop: '-30px' } }}
           background={GET_TICKETS_BG}
           concaveDivider
-          clipFill={{ light: '#3a1fc5' }}
+          clipFill={{ light: '#7645D9' }}
           dividerPosition="top"
           index={2}
         >
@@ -108,11 +109,12 @@ const Lottery = () => {
         <PageSection
           dividerPosition="top"
           dividerFill={{ light: theme.colors.background }}
-          clipFill={{ light: '#3a1fc5', dark: '#3a1fc5' }}
+          clipFill={{ light: '#9A9FD0', dark: '#66578D' }}
           index={2}
         >
           <HowToPlay />
         </PageSection>
+        <LotterySubgraphHealthIndicator />
       </LotteryPage>
     </>
   )

@@ -21,12 +21,16 @@ export const getTimeWindowChange = (lineChartData) => {
   }
 }
 
+/**
+ *
+ * @deprecated not multi chain compatible
+ */
 export const getTokenAddress = (tokenAddress: undefined | string) => {
   if (!tokenAddress) {
     return ''
   }
   const lowerCaseAddress = tokenAddress.toLowerCase()
-  if (lowerCaseAddress === 'pol') {
+  if (lowerCaseAddress === 'bnb') {
     return BNB_ADDRESS
   }
 

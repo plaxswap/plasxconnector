@@ -4,7 +4,7 @@ import BigNumber from 'bignumber.js'
 import { useTranslation } from '@pancakeswap/localization'
 import { Modal, Text, Box, Flex, BalanceInput } from '@pancakeswap/uikit'
 import useWinRateCalculator from 'views/Pottery/hooks/useWinRateCalculator'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { useVaultApy } from 'hooks/useVaultApy'
 import { weeksToSeconds } from 'views/Pools/components/utils/formatSecondsToWeeks'
 import { CalculatorMode, EditingCurrency } from '../../types'
@@ -47,7 +47,7 @@ const WinRateModal: React.FC<React.PropsWithChildren<WinRateModalProps>> = ({
   totalSupply,
 }) => {
   const { t } = useTranslation()
-  const cakePrice = usePriceCakeBusd()
+  const cakePrice = usePriceCakeUSD()
   const { getLockedApy } = useVaultApy()
   const balanceInputRef = useRef<HTMLInputElement | null>(null)
   const apy = getLockedApy(weeksToSeconds(10))
@@ -79,9 +79,9 @@ const WinRateModal: React.FC<React.PropsWithChildren<WinRateModalProps>> = ({
     setCalculatorMode(CalculatorMode.WIN_RATE_BASED_ON_PRINCIPAL)
   }
 
-  const editingUnit = editingCurrency === EditingCurrency.TOKEN ? 'PLAX' : 'USD'
+  const editingUnit = editingCurrency === EditingCurrency.TOKEN ? 'CAKE' : 'USD'
   const editingValue = editingCurrency === EditingCurrency.TOKEN ? principalAsToken : principalAsUSD
-  const conversionUnit = editingCurrency === EditingCurrency.TOKEN ? 'USD' : 'PLAX'
+  const conversionUnit = editingCurrency === EditingCurrency.TOKEN ? 'USD' : 'CAKE'
   const conversionValue = editingCurrency === EditingCurrency.TOKEN ? principalAsUSD : principalAsToken
   const onUserInput = editingCurrency === EditingCurrency.TOKEN ? setPrincipalFromTokenValue : setPrincipalFromUSDValue
 

@@ -19,7 +19,7 @@ import { PublicIfoData } from 'views/Ifos/types'
 import { Ifo } from 'config/constants/types'
 import { BIG_TEN } from '@pancakeswap/utils/bigNumber'
 import { getBlockExploreLink } from 'utils'
-import { formatBigNumber } from '@pancakeswap/utils/formatBalance'
+import { formatBigInt } from '@pancakeswap/utils/formatBalance'
 
 const SmartContractIcon: React.FC<React.PropsWithChildren<SvgProps>> = (props) => {
   return (
@@ -90,7 +90,7 @@ const IfoAchievement: React.FC<React.PropsWithChildren<Props>> = ({ ifo, publicI
   const projectUrl = ifo.token.projectLink
   const campaignTitle = ifo.name
   const minLpForAchievement = publicIfoData.thresholdPoints
-    ? formatBigNumber(publicIfoData.thresholdPoints, 3)
+    ? formatBigInt(publicIfoData.thresholdPoints, 3)
     : FIXED_MIN_DOLLAR_FOR_ACHIEVEMENT.div(publicIfoData.currencyPriceInUSD).toNumber().toFixed(3)
 
   return (
@@ -122,7 +122,7 @@ const IfoAchievement: React.FC<React.PropsWithChildren<Props>> = ({ ifo, publicI
             <Text color="textSubtle" fontSize="12px">
               {t('Commit ~%amount% %symbol% in total to earn!', {
                 amount: minLpForAchievement,
-                symbol: ifo.currency === bscTokens.cake ? 'PLASA' : 'LP',
+                symbol: ifo.currency === bscTokens.cake ? 'CAKE' : 'LP',
               })}
             </Text>
           ) : (

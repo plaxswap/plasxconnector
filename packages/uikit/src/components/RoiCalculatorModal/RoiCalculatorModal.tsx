@@ -31,9 +31,10 @@ const StyledModal = styled(Modal)`
   }
 `;
 
-const ScrollableContainer = styled.div`
+export const ScrollableContainer = styled.div`
   padding: 24px;
   max-height: 500px;
+  overflow-x: hidden;
   overflow-y: auto;
   ${({ theme }) => theme.mediaQueries.sm} {
     max-height: none;
@@ -79,6 +80,8 @@ export interface RoiCalculatorModalProps {
   isLocked?: boolean;
   stableSwapAddress?: string;
   stableLpFee?: number;
+  farmCakePerSecond?: string;
+  totalMultipliers?: string;
 }
 
 const RoiCalculatorModal: React.FC<React.PropsWithChildren<RoiCalculatorModalProps>> = ({
@@ -110,6 +113,8 @@ const RoiCalculatorModal: React.FC<React.PropsWithChildren<RoiCalculatorModalPro
   isLocked = false,
   stableSwapAddress,
   stableLpFee,
+  farmCakePerSecond,
+  totalMultipliers,
 }) => {
   const { t } = useTranslation();
   const balanceInputRef = useRef<HTMLInputElement | null>(null);
@@ -312,6 +317,8 @@ const RoiCalculatorModal: React.FC<React.PropsWithChildren<RoiCalculatorModalPro
         isLocked={isLocked}
         stableSwapAddress={stableSwapAddress}
         stableLpFee={stableLpFee}
+        farmCakePerSecond={farmCakePerSecond}
+        totalMultipliers={totalMultipliers}
       />
     </StyledModal>
   );

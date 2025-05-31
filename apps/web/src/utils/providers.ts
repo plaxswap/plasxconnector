@@ -1,7 +1,14 @@
-import { StaticJsonRpcProvider } from '@ethersproject/providers'
+import { createPublicClient, http } from 'viem'
+import { bsc, polygon } from 'viem/chains'
 
-export const BSC_PROD_NODE = process.env.NEXT_PUBLIC_NODE_PRODUCTION || 'https://1rpc.io/37W31VzwTtHTisDEK/matic'
+export const BSC_PROD_NODE = process.env.NEXT_PUBLIC_NODE_PRODUCTION || 'https://polygon.llamarpc.com'
 
-export const bscRpcProvider = new StaticJsonRpcProvider(BSC_PROD_NODE)
+export const bscRpcProvider = createPublicClient({
+  transport: http(BSC_PROD_NODE),
+  chain: bsc,
+})
 
-export default null
+export const polygonRpcProvider = createPublicClient({
+  transport: http(BSC_PROD_NODE),
+  chain: polygon,
+})

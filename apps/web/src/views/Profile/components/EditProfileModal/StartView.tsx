@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js'
 import { Button, Flex, InjectedModalProps, Message, MessageText } from '@pancakeswap/uikit'
 import { getPancakeProfileAddress } from 'utils/addressHelpers'
 import { useCake } from 'hooks/useContract'
-import { useGetCakeBalance } from 'hooks/useTokenBalance'
+import { useBSCCakeBalance } from 'hooks/useTokenBalance'
 import { useCakeEnable } from 'hooks/useCakeEnable'
 import { useTranslation } from '@pancakeswap/localization'
 import useGetProfileCosts from 'views/Profile/hooks/useGetProfileCosts'
@@ -46,16 +46,16 @@ const AvatarWrapper = styled.div`
 const StartPage: React.FC<React.PropsWithChildren<StartPageProps>> = ({ goToApprove, goToChange, goToRemove }) => {
   const { t } = useTranslation()
   const { address: account } = useAccount()
-  const { reader: cakeContract } = useCake()
+  const cakeContract = useCake()
   const { profile } = useProfile()
-  const { balance: cakeBalance, fetchStatus } = useGetCakeBalance()
+  const { balance: cakeBalance, fetchStatus } = useBSCCakeBalance()
   const {
     costs: { numberCakeToUpdate, numberCakeToReactivate },
     isLoading: isProfileCostsLoading,
   } = useGetProfileCosts()
   const [needsApproval, setNeedsApproval] = useState(null)
   const minimumCakeRequired = profile?.isActive ? numberCakeToUpdate : numberCakeToReactivate
-  const hasMinimumCakeRequired = fetchStatus === FetchStatus.Fetched && cakeBalance.gte(minimumCakeRequired)
+  const hasMinimumCakeRequired = fetchStatus === FetchStatus.Fetched && cakeBalance >= minimumCakeRequired
   const { handleEnable, pendingEnableTx } = useCakeEnable(new BigNumber(minimumCakeRequired.toString()))
   const [showCakeRequireFlow, setShowCakeRequireFlow] = useState(false)
 
@@ -99,12 +99,12 @@ const StartPage: React.FC<React.PropsWithChildren<StartPageProps>> = ({ goToAppr
           <Message variant="warning" my="16px">
             <MessageText>
               {t(
-                "Before editing your profile, please make sure you've claimed all the unspent PLAX from previous IFOs!",
+                "Before editing your profile, please make sure you've claimed all the unspent CAKE from previous IFOs!",
               )}
             </MessageText>
           </Message>
           {showCakeRequireFlow ? (
-            <Flex mb="8px">
+            <Flex mb="16px" pb="16px">
               <ApproveConfirmButtons
                 isApproveDisabled={isProfileCostsLoading || hasMinimumCakeRequired}
                 isApproving={pendingEnableTx}

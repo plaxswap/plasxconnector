@@ -3,21 +3,28 @@ import {
   Farm as FarmUI,
   FarmTableLiquidityProps,
   FarmTableMultiplierProps,
+  Flex,
   LinkExternal,
+  Skeleton,
   Text,
   useMatchBreakpoints,
-  Flex,
+  useModalV2,
 } from '@pancakeswap/uikit'
-
-import { FarmWithStakedValue } from '@pancakeswap/farms'
+import ConnectWalletButton from 'components/ConnectWalletButton'
 import { CHAIN_QUERY_NAME } from 'config/chains'
 import { useActiveChainId } from 'hooks/useActiveChainId'
-import { useContext, useMemo } from 'react'
+import { FC, useContext, useMemo } from 'react'
 import { multiChainPaths } from 'state/info/constant'
 import styled, { css, keyframes } from 'styled-components'
 import { getBlockExploreLink } from 'utils'
-import getLiquidityUrlPathParts from 'utils/getLiquidityUrlPathParts'
+import { unwrappedToken } from 'utils/wrappedCurrency'
+import { AddLiquidityV3Modal } from 'views/AddLiquidityV3/Modal'
 
+import { V2Farm, V3Farm } from 'views/Farms/FarmsV3'
+import { SELECTOR_TYPE } from 'views/AddLiquidityV3/types'
+import { useAccount } from 'wagmi'
+import { FarmV3ApyButton } from '../../FarmCard/V3/FarmV3ApyButton'
+import FarmV3CardList from '../../FarmCard/V3/FarmV3CardList'
 import BoostedAction from '../../YieldBooster/components/BoostedAction'
 import { YieldBoosterStateContext } from '../../YieldBooster/components/ProxyFarmContainer'
 import Apr, { AprProps } from '../Apr'
@@ -25,13 +32,27 @@ import { HarvestAction, HarvestActionContainer, ProxyHarvestActionContainer } fr
 import StakedAction, { ProxyStakedContainer, StakedContainer } from './StakedAction'
 import { ActionContainer as ActionContainerSection, ActionContent, ActionTitles } from './styles'
 
-const { Multiplier, Liquidity } = FarmUI.FarmTable
+const { Multiplier, Liquidity, StakedLiquidity } = FarmUI.FarmTable
+const { NoPosition } = FarmUI.FarmV3Table
 
 export interface ActionPanelProps {
   apr: AprProps
   multiplier: FarmTableMultiplierProps
   liquidity: FarmTableLiquidityProps
-  details: FarmWithStakedValue
+  details: V2Farm
+  userDataReady: boolean
+  expanded: boolean
+  alignLinksToRight?: boolean
+}
+
+export interface ActionPanelV3Props {
+  apr: {
+    value: string
+    pid: number
+  }
+  multiplier: FarmTableMultiplierProps
+  stakedLiquidity: FarmTableLiquidityProps
+  details: V3Farm
   userDataReady: boolean
   expanded: boolean
   alignLinksToRight?: boolean
@@ -69,12 +90,13 @@ const Container = styled.div<{ expanded }>`
   display: flex;
   width: 100%;
   flex-direction: column-reverse;
-  padding: 24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
 
   ${({ theme }) => theme.mediaQueries.lg} {
     flex-direction: row;
     align-items: center;
-    padding: 16px 32px;
+    padding: 16px 24px;
   }
 `
 
@@ -82,32 +104,25 @@ const StyledLinkExternal = styled(LinkExternal)`
   font-weight: 400;
 `
 
-const StakeContainer = styled.div`
-  color: ${({ theme }) => theme.colors.text};
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-
-  ${({ theme }) => theme.mediaQueries.sm} {
-    justify-content: flex-start;
-  }
-`
-
 const ActionContainer = styled.div`
   display: flex;
+  overflow: auto;
+  padding-left: 24px;
+  padding-right: 24px;
   flex-direction: column;
 
   ${({ theme }) => theme.mediaQueries.sm} {
     flex-direction: row;
     align-items: center;
     flex-grow: 1;
-    flex-basis: 0;
     flex-wrap: wrap;
   }
 `
 
 const InfoContainer = styled.div`
   min-width: 200px;
+  padding-left: 24px;
+  padding-right: 24px;
 `
 
 const ValueContainer = styled.div``
@@ -119,7 +134,127 @@ const ValueWrapper = styled.div`
   margin: 4px 0px;
 `
 
-const ActionPanel: React.FunctionComponent<React.PropsWithChildren<ActionPanelProps>> = ({
+const StyledText = styled(Text)`
+  &:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`
+
+const ActionPanelContainer = ({ expanded, values, infos, children }) => {
+  return (
+    <Container expanded={expanded}>
+      <InfoContainer>
+        <ValueContainer>{values}</ValueContainer>
+        {infos}
+      </InfoContainer>
+      <ActionContainer style={{ maxHeight: 700 }}>{children}</ActionContainer>
+    </Container>
+  )
+}
+
+export const ActionPanelV3: FC<ActionPanelV3Props> = ({
+  expanded,
+  details,
+  multiplier,
+  stakedLiquidity,
+  alignLinksToRight,
+  userDataReady,
+}) => {
+  const { isDesktop } = useMatchBreakpoints()
+  const { t } = useTranslation()
+  const { address: account } = useAccount()
+  const farm = details
+  const isActive = farm.multiplier !== '0X'
+  const lpLabel = useMemo(() => farm.lpSymbol && farm.lpSymbol.replace(/pancake/gi, ''), [farm.lpSymbol])
+  const bsc = useMemo(
+    () => getBlockExploreLink(farm.lpAddress, 'address', farm.token.chainId),
+    [farm.lpAddress, farm.token.chainId],
+  )
+
+  const infoUrl = useMemo(() => {
+    return `/info/v3${multiChainPaths[farm.token.chainId]}/pairs/${farm.lpAddress}?chain=${
+      CHAIN_QUERY_NAME[farm.token.chainId]
+    }`
+  }, [farm.lpAddress, farm.token.chainId])
+
+  const hasNoPosition = useMemo(
+    () => userDataReady && farm.stakedPositions.length === 0 && farm.unstakedPositions.length === 0,
+    [farm.stakedPositions.length, farm.unstakedPositions.length, userDataReady],
+  )
+
+  const addLiquidityModal = useModalV2()
+
+  return (
+    <>
+      <AddLiquidityV3Modal
+        {...addLiquidityModal}
+        currency0={unwrappedToken(farm.token)}
+        currency1={unwrappedToken(farm.quoteToken)}
+        feeAmount={farm.feeAmount}
+      />
+      <ActionPanelContainer
+        expanded={expanded}
+        values={
+          <>
+            {!isDesktop && (
+              <>
+                <ValueWrapper>
+                  <Text>{t('APR')}</Text>
+                  <FarmV3ApyButton farm={farm} />
+                </ValueWrapper>
+                <ValueWrapper>
+                  <Text>{t('Multiplier')}</Text>
+                  <Multiplier {...multiplier} />
+                </ValueWrapper>
+                <ValueWrapper>
+                  <Text>{t('Staked Liquidity')}</Text>
+                  <StakedLiquidity {...stakedLiquidity} />
+                </ValueWrapper>
+              </>
+            )}
+          </>
+        }
+        infos={
+          <>
+            {isActive && (
+              <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
+                <StyledText color="primary" onClick={addLiquidityModal.onOpen}>
+                  {t('Add %symbol%', { symbol: lpLabel })}
+                </StyledText>
+              </Flex>
+            )}
+            <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
+              <StyledLinkExternal href={infoUrl}>{t('See Pair Info')}</StyledLinkExternal>
+            </Flex>
+            <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
+              <StyledLinkExternal isBscScan href={bsc}>
+                {t('View Contract')}
+              </StyledLinkExternal>
+            </Flex>
+          </>
+        }
+      >
+        {!userDataReady ? (
+          <Skeleton height={200} width="100%" />
+        ) : account && !hasNoPosition ? (
+          <FarmV3CardList farm={farm} direction="row" showHarvestAll />
+        ) : (
+          <NoPosition
+            inactive={!isActive}
+            boostedAction={null}
+            account={account}
+            hasNoPosition={hasNoPosition}
+            onAddLiquidity={addLiquidityModal.onOpen}
+            connectWalletButton={<ConnectWalletButton mt="8px" width="100%" />}
+          />
+        )}
+      </ActionPanelContainer>
+    </>
+  )
+}
+
+export const ActionPanelV2: React.FunctionComponent<React.PropsWithChildren<ActionPanelProps>> = ({
   details,
   apr,
   multiplier,
@@ -140,76 +275,90 @@ const ActionPanel: React.FunctionComponent<React.PropsWithChildren<ActionPanelPr
     currentLanguage: { locale },
   } = useTranslation()
   const isActive = farm.multiplier !== '0X'
-  const { quoteToken, token, stableSwapAddress } = farm
-  const lpLabel = farm.lpSymbol && farm.lpSymbol.replace(/pancake/gi, '')
-  const liquidityUrlPathParts = getLiquidityUrlPathParts({
-    quoteTokenAddress: quoteToken.address,
-    tokenAddress: token.address,
-    chainId,
-  })
-  const { lpAddress } = farm
-  const bsc = getBlockExploreLink(lpAddress, 'address', chainId)
+  const lpLabel = useMemo(() => farm.lpSymbol && farm.lpSymbol.replace(/pancake/gi, ''), [farm.lpSymbol])
+  const bsc = useMemo(
+    () => getBlockExploreLink(farm.lpAddress, 'address', farm.token.chainId),
+    [farm.lpAddress, farm.token.chainId],
+  )
   const { stakedBalance, tokenBalance, proxy } = farm.userData
 
   const infoUrl = useMemo(() => {
     if (farm.isStable) {
-      return `/info${multiChainPaths[chainId]}/pairs/${stableSwapAddress}?type=stableSwap&chain=${CHAIN_QUERY_NAME[chainId]}`
+      return `/info${multiChainPaths[chainId]}/pairs/${farm.stableSwapAddress}?type=stableSwap&chain=${CHAIN_QUERY_NAME[chainId]}`
     }
-    return `/info${multiChainPaths[chainId]}/pairs/${lpAddress}?chain=${CHAIN_QUERY_NAME[chainId]}`
-  }, [chainId, farm.isStable, lpAddress, stableSwapAddress])
+    return `/info${multiChainPaths[chainId]}/pairs/${farm.lpAddress}?chain=${CHAIN_QUERY_NAME[chainId]}`
+  }, [chainId, farm.isStable, farm.lpAddress, farm.stableSwapAddress])
+
+  const addLiquidityModal = useModalV2()
 
   return (
-    <Container expanded={expanded}>
-      <InfoContainer>
-        <ValueContainer>
-          {farm.isCommunity && farm.auctionHostingEndDate && (
-            <ValueWrapper>
-              <Text>{t('Auction Hosting Ends')}</Text>
-              <Text paddingLeft="4px">
-                {new Date(farm.auctionHostingEndDate).toLocaleString(locale, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </Text>
-            </ValueWrapper>
-          )}
-          {!isDesktop && (
-            <>
+    <>
+      <AddLiquidityV3Modal
+        {...addLiquidityModal}
+        currency0={unwrappedToken(farm.token)}
+        currency1={unwrappedToken(farm.quoteToken)}
+        preferredSelectType={farm.isStable ? SELECTOR_TYPE.STABLE : SELECTOR_TYPE.V2}
+      />
+      <ActionPanelContainer
+        expanded={expanded}
+        values={
+          <>
+            {farm.isCommunity && farm.auctionHostingEndDate && (
               <ValueWrapper>
-                <Text>{t('APR')}</Text>
-                <Apr {...apr} useTooltipText={false} boosted={farm.boosted} />
+                <Text>{t('Auction Hosting Ends')}</Text>
+                <Text paddingLeft="4px">
+                  {new Date(farm.auctionHostingEndDate).toLocaleString(locale, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Text>
               </ValueWrapper>
-              <ValueWrapper>
-                <Text>{t('Multiplier')}</Text>
-                <Multiplier {...multiplier} />
-              </ValueWrapper>
-              <ValueWrapper>
-                <Text>{t('Liquidity')}</Text>
-                <Liquidity {...liquidity} />
-              </ValueWrapper>
-            </>
-          )}
-        </ValueContainer>
-        {isActive && (
-          <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
-            <StakeContainer>
-              <StyledLinkExternal href={`/add/${liquidityUrlPathParts}`}>
-                {t('Get %symbol%', { symbol: lpLabel })}
+            )}
+            {!isDesktop && (
+              <>
+                <ValueWrapper>
+                  <Text>{t('APR')}</Text>
+                  <Apr
+                    {...apr}
+                    useTooltipText={false}
+                    boosted={farm.boosted}
+                    farmCakePerSecond={multiplier.farmCakePerSecond}
+                    totalMultipliers={multiplier.totalMultipliers}
+                  />
+                </ValueWrapper>
+                <ValueWrapper>
+                  <Text>{t('Multiplier')}</Text>
+                  <Multiplier {...multiplier} />
+                </ValueWrapper>
+                <ValueWrapper>
+                  <Text>{t('Staked Liquidity')}</Text>
+                  <Liquidity {...liquidity} />
+                </ValueWrapper>
+              </>
+            )}
+          </>
+        }
+        infos={
+          <>
+            {isActive && (
+              <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
+                <StyledText color="primary" onClick={addLiquidityModal.onOpen}>
+                  {t('Add %symbol%', { symbol: lpLabel })}
+                </StyledText>
+              </Flex>
+            )}
+            <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
+              <StyledLinkExternal href={infoUrl}>{t('See Pair Info')}</StyledLinkExternal>
+            </Flex>
+            <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
+              <StyledLinkExternal isBscScan href={bsc}>
+                {t('View Contract')}
               </StyledLinkExternal>
-            </StakeContainer>
-          </Flex>
-        )}
-        {/* <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
-          <StyledLinkExternal href={infoUrl}>{t('See Pair Info')}</StyledLinkExternal>
-        </Flex> */}
-        <Flex mb="2px" justifyContent={alignLinksToRight ? 'flex-end' : 'flex-start'}>
-          <StyledLinkExternal isBscScan href={bsc}>
-            {t('View Contract')}
-          </StyledLinkExternal>
-        </Flex>
-      </InfoContainer>
-      <ActionContainer>
+            </Flex>
+          </>
+        }
+      >
         {shouldUseProxyFarm ? (
           <ProxyHarvestActionContainer {...proxyFarm} userDataReady={userDataReady}>
             {(props) => <HarvestAction {...props} />}
@@ -220,7 +369,7 @@ const ActionPanel: React.FunctionComponent<React.PropsWithChildren<ActionPanelPr
           </HarvestActionContainer>
         )}
         {farm?.boosted && (
-          <ActionContainerSection style={{ minHeight: isMobile ? 'auto' : 124.5 }}>
+          <ActionContainerSection style={{ minHeight: isMobile ? 'auto' : isMobile ? 'auto' : 124.5 }}>
             <BoostedAction
               title={(status) => (
                 <ActionTitles>
@@ -252,9 +401,7 @@ const ActionPanel: React.FunctionComponent<React.PropsWithChildren<ActionPanelPr
             {(props) => <StakedAction {...props} />}
           </StakedContainer>
         )}
-      </ActionContainer>
-    </Container>
+      </ActionPanelContainer>
+    </>
   )
 }
-
-export default ActionPanel

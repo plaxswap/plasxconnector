@@ -7,15 +7,17 @@ import { getBalanceNumber } from '@pancakeswap/utils/formatBalance'
 import { useTranslation } from '@pancakeswap/localization'
 import { useChainCurrentBlock } from 'state/block/hooks'
 import { getVaultPosition, VaultPosition } from 'utils/cakePool'
-import { getCakeVaultAddress, getAddress } from 'utils/addressHelpers'
-import { multicallv2 } from 'utils/multicall'
+import { getCakeVaultAddress } from 'utils/addressHelpers'
 import { getActivePools } from 'utils/calls'
-import cakeVaultAbi from 'config/abi/cakeVaultV2.json'
+import { cakeVaultV2ABI } from '@pancakeswap/pools'
 import { BIG_ZERO } from '@pancakeswap/utils/bigNumber'
-import { convertSharesToCake } from '../../../../views/Pools/helpers'
-import { getScores } from '../../../../views/Voting/getScores'
-import { PANCAKE_SPACE } from '../../../../views/Voting/config'
-import * as strategies from '../../../../views/Voting/strategies'
+import { convertSharesToCake } from 'views/Pools/helpers'
+import { getScores } from 'views/Voting/getScores'
+import { PANCAKE_SPACE } from 'views/Voting/config'
+import { cakePoolBalanceStrategy, createTotalStrategy } from 'views/Voting/strategies'
+import { publicClient } from 'utils/wagmi'
+
+const bscClient = publicClient({ chainId: ChainId.BSC })
 
 const useCakeBenefits = () => {
   const { address: account } = useAccount()
@@ -27,23 +29,47 @@ const useCakeBenefits = () => {
   const currentBscBlock = useChainCurrentBlock(ChainId.BSC)
 
   const { data, status } = useSWR(account && currentBscBlock && ['cakeBenefits', account], async () => {
-    const userVaultCalls = ['userInfo', 'calculatePerformanceFee', 'calculateOverdueFee'].map((method) => ({
-      address: cakeVaultAddress,
-      name: method,
-      params: [account],
-    }))
-
-    const pricePerFullShareCall = [
-      {
-        address: cakeVaultAddress,
-        name: 'getPricePerFullShare',
-      },
-    ]
-
-    const [userContractResponse, [currentPerformanceFee], [currentOverdueFee], sharePrice] = await multicallv2({
-      abi: cakeVaultAbi,
-      calls: [...userVaultCalls, ...pricePerFullShareCall],
+    const [userInfo, currentPerformanceFee, currentOverdueFee, sharePrice] = await bscClient.multicall({
+      contracts: [
+        {
+          address: cakeVaultAddress,
+          abi: cakeVaultV2ABI,
+          functionName: 'userInfo',
+          args: [account],
+        },
+        {
+          address: cakeVaultAddress,
+          abi: cakeVaultV2ABI,
+          functionName: 'calculatePerformanceFee',
+          args: [account],
+        },
+        {
+          address: cakeVaultAddress,
+          abi: cakeVaultV2ABI,
+          functionName: 'calculateOverdueFee',
+          args: [account],
+        },
+        {
+          address: cakeVaultAddress,
+          abi: cakeVaultV2ABI,
+          functionName: 'getPricePerFullShare',
+        },
+      ],
+      allowFailure: false,
     })
+
+    const userContractResponse = {
+      shares: userInfo[0],
+      lastDepositedTime: userInfo[1],
+      cakeAtLastUserAction: userInfo[2],
+      lastUserActionTime: userInfo[3],
+      lockStartTime: userInfo[4],
+      lockEndTime: userInfo[5],
+      userBoostedShare: userInfo[6],
+      locked: userInfo[7],
+      lockedAmount: userInfo[8],
+    }
+
     const currentPerformanceFeeAsBigNumber = new BigNumber(currentPerformanceFee.toString())
     const currentOverdueFeeAsBigNumber = new BigNumber(currentOverdueFee.toString())
     const sharePriceAsBigNumber = sharePrice ? new BigNumber(sharePrice.toString()) : BIG_ZERO
@@ -67,18 +93,18 @@ const useCakeBenefits = () => {
     let iCake = ''
     let vCake = { vaultScore: '0', totalScore: '0' }
     if (lockPosition === VaultPosition.Locked) {
-      const credit = await ifoCreditAddressContract.getUserCredit(account)
+      const credit = await ifoCreditAddressContract.read.getUserCredit([account])
       iCake = getBalanceNumber(new BigNumber(credit.toString())).toLocaleString('en', { maximumFractionDigits: 3 })
 
-      const eligiblePools = await getActivePools(currentBscBlock)
-      const poolAddresses = eligiblePools.map(({ contractAddress }) => getAddress(contractAddress, ChainId.BSC))
+      const eligiblePools = await getActivePools(ChainId.BSC, currentBscBlock)
+      const poolAddresses = eligiblePools.map(({ contractAddress }) => contractAddress)
 
       const [cakeVaultBalance, total] = await getScores(
         PANCAKE_SPACE,
-        [strategies.cakePoolBalanceStrategy('v1'), strategies.createTotalStrategy(poolAddresses, 'v1')],
+        [cakePoolBalanceStrategy('v1'), createTotalStrategy(poolAddresses, 'v1')],
         ChainId.BSC.toString(),
         [account],
-        currentBscBlock,
+        Number(currentBscBlock),
       )
       vCake = {
         vaultScore: cakeVaultBalance[account]

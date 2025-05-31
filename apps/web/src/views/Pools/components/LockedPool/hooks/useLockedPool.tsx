@@ -2,6 +2,7 @@ import { useState, useCallback, Dispatch, SetStateAction } from 'react'
 import { useAccount } from 'wagmi'
 import { useSWRConfig } from 'swr'
 import { useTranslation } from '@pancakeswap/localization'
+import { ONE_WEEK_DEFAULT } from '@pancakeswap/pools'
 import { useAppDispatch } from 'state'
 import { useBUSDCakeAmount } from 'hooks/useBUSDPrice'
 import { useVaultPoolContract } from 'hooks/useContract'
@@ -11,8 +12,9 @@ import { useToast } from '@pancakeswap/uikit'
 import useCatchTxError from 'hooks/useCatchTxError'
 import { fetchCakeVaultUserData } from 'state/pools'
 import { Token } from '@pancakeswap/sdk'
-import { ONE_WEEK_DEFAULT, vaultPoolConfig } from 'config/constants/pools'
+import { vaultPoolConfig } from 'config/constants/pools'
 import { VaultKey } from 'state/types'
+import { useActiveChainId } from 'hooks/useActiveChainId'
 
 import { ToastDescriptionWithTx } from 'components/Toast'
 import { useCallWithGasPrice } from 'hooks/useCallWithGasPrice'
@@ -38,6 +40,7 @@ export default function useLockedPool(hookArgs: HookArgs): HookReturn {
   const { lockedAmount, stakingToken, onDismiss, prepConfirmArg, defaultDuration = ONE_WEEK_DEFAULT } = hookArgs
 
   const dispatch = useAppDispatch()
+  const { chainId } = useActiveChainId()
 
   const { address: account } = useAccount()
   const { fetchWithCatchTxError, loading: pendingTx } = useCatchTxError()
@@ -53,13 +56,11 @@ export default function useLockedPool(hookArgs: HookArgs): HookReturn {
   const handleDeposit = useCallback(
     async (convertedStakeAmount: BigNumber, lockDuration: number) => {
       const callOptions = {
-        gasLimit: vaultPoolConfig[VaultKey.CakeVault].gasLimit,
+        gas: vaultPoolConfig[VaultKey.CakeVault].gasLimit,
       }
 
       const receipt = await fetchWithCatchTxError(() => {
-        // .toString() being called to fix a BigNumber error in prod
-        // as suggested here https://github.com/ChainSafe/web3.js/issues/2077
-        const methodArgs = [convertedStakeAmount.toString(), lockDuration]
+        const methodArgs = [BigInt(convertedStakeAmount.toString()), BigInt(lockDuration)] as const
         return callWithGasPrice(vaultPoolContract, 'deposit', methodArgs, callOptions)
       })
 
@@ -71,11 +72,22 @@ export default function useLockedPool(hookArgs: HookArgs): HookReturn {
           </ToastDescriptionWithTx>,
         )
         onDismiss?.()
-        dispatch(fetchCakeVaultUserData({ account }))
+        dispatch(fetchCakeVaultUserData({ account, chainId }))
         mutate(['userCakeLockStatus', account])
       }
     },
-    [fetchWithCatchTxError, toastSuccess, dispatch, onDismiss, account, vaultPoolContract, t, callWithGasPrice, mutate],
+    [
+      fetchWithCatchTxError,
+      toastSuccess,
+      dispatch,
+      onDismiss,
+      account,
+      vaultPoolContract,
+      t,
+      callWithGasPrice,
+      mutate,
+      chainId,
+    ],
   )
 
   const handleConfirmClick = useCallback(async () => {

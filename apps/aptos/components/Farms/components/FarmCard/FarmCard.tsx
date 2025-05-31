@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import BigNumber from 'bignumber.js'
+import { useFarms } from 'state/farms/hook'
 import styled from 'styled-components'
 import { Card, Flex, Text, Skeleton, ExpandableSectionButton, Farm as FarmUI } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
@@ -7,6 +8,7 @@ import getLiquidityUrlPathParts from 'utils/getLiquidityUrlPathParts'
 import CardHeading from './CardHeading'
 import CardActionsContainer from './CardActionsContainer'
 import ApyButton from './ApyButton'
+import { getDisplayFarmCakePerSecond } from '../getDisplayFarmCakePerSecond'
 
 const { DetailsSection } = FarmUI.FarmCard
 
@@ -50,6 +52,11 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
   originalLiquidity,
 }) => {
   const { t } = useTranslation()
+  const { totalRegularAllocPoint, cakePerBlock } = useFarms()
+
+  const totalMultipliers = totalRegularAllocPoint ? (Number(totalRegularAllocPoint) / 100).toString() : '0'
+
+  const farmCakePerSecond = getDisplayFarmCakePerSecond(farm.poolWeight?.toNumber(), cakePerBlock)
 
   const [showExpandableSection, setShowExpandableSection] = useState(false)
 
@@ -69,7 +76,7 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
     tokenAddress: farm.token?.address,
   })
   const addLiquidityUrl = `/add/${liquidityUrlPathParts}`
-  const isPromotedFarm = farm.token?.symbol === 'PLAX'
+  const isPromotedFarm = farm.token?.symbol === 'CAKE'
 
   const toggleExpandableSection = useCallback(() => {
     setShowExpandableSection((prev) => !prev)
@@ -84,6 +91,8 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
           isCommunityFarm={farm.isCommunity}
           token={farm.token}
           quoteToken={farm.quoteToken}
+          farmCakePerSecond={farmCakePerSecond}
+          totalMultipliers={totalMultipliers}
         />
         {!removed && (
           <Flex justifyContent="space-between" alignItems="center">
@@ -104,6 +113,8 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
                   displayApr={displayApr}
                   lpRewardsApr={farm.lpRewardsApr}
                   useTooltipText
+                  farmCakePerSecond={farmCakePerSecond}
+                  totalMultipliers={totalMultipliers}
                 />
               ) : (
                 <Skeleton height={24} width={80} />
@@ -113,7 +124,7 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
         )}
         <Flex justifyContent="space-between">
           <Text>{t('Earn')}:</Text>
-          <Text bold>{earnLabel}</Text>
+          <Text>{earnLabel}</Text>
         </Flex>
         <CardActionsContainer
           farm={farm}
@@ -130,9 +141,12 @@ const FarmCard: React.FC<React.PropsWithChildren<FarmCardProps>> = ({
             removed={removed}
             totalValueFormatted={totalValueFormatted}
             lpLabel={lpLabel}
-            addLiquidityUrl={addLiquidityUrl}
+            onAddLiquidity={addLiquidityUrl}
             isCommunity={farm.isCommunity}
             auctionHostingEndDate={farm.auctionHostingEndDate}
+            multiplier={farm.multiplier}
+            farmCakePerSecond={farmCakePerSecond}
+            totalMultipliers={totalMultipliers}
           />
         )}
       </ExpandingWrapper>

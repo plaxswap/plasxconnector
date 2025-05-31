@@ -13,9 +13,9 @@ export const BLOCKED_ADDRESSES: string[] = [
 export const INITIAL_ALLOWED_SLIPPAGE = 50
 // 20 minutes, denominated in seconds
 export const DEFAULT_DEADLINE_FROM_NOW = 60 * 20
+export const L2_DEADLINE_FROM_NOW = 60 * 5
 
 export { default as ifosConfig } from './ifo'
-export { default as poolsConfig } from './pools'
 
 export const FAST_INTERVAL = 10000
 export const SLOW_INTERVAL = 60000
@@ -28,5 +28,4 @@ export const PREDICTION_TOOLTIP_DISMISS_KEY = 'prediction-switcher-dismiss-toolt
 // Gelato uses this address to define a native currency in all chains
 export const GELATO_NATIVE = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 
-export const EXCHANGE_DOCS_URLS = 'https://docs.plaxswap.io/products/exchange'
-export const EXCHANGE_HELP_URLS = 'https://docs.plaxswap.io/click-here-for-help'
+export const EXCHANGE_HELP_URLS = 'https://docs.pancakeswap.finance/help'

@@ -2,7 +2,7 @@ import styled, { keyframes } from 'styled-components'
 import { Box, Flex, Heading, Skeleton, Balance } from '@pancakeswap/uikit'
 import { LotteryStatus } from 'config/constants/types'
 import { useTranslation } from '@pancakeswap/localization'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { useLottery } from 'state/lottery/hooks'
 import { getBalanceNumber } from '@pancakeswap/utils/formatBalance'
 import { TicketPurchaseCard } from '../svgs'
@@ -80,7 +80,7 @@ const PrizeTotalBalance = styled(Balance)`
 
 const StyledBuyTicketButton = styled(BuyTicketsButton)<{ disabled: boolean }>`
   background: ${({ theme, disabled }) =>
-    disabled ? theme.colors.disabled : 'linear-gradient(180deg, #0e13aa 0%, #5156f3 100%)'};
+    disabled ? theme.colors.disabled : 'linear-gradient(180deg, #7645d9 0%, #452a7a 100%)'};
   width: 200px;
   ${({ theme }) => theme.mediaQueries.xs} {
     width: 240px;
@@ -217,7 +217,7 @@ const Hero = () => {
     isTransitioning,
   } = useLottery()
 
-  const cakePriceBusd = usePriceCakeBusd()
+  const cakePriceBusd = usePriceCakeUSD()
   const prizeInBusd = amountCollectedInCake.times(cakePriceBusd)
   const prizeTotal = getBalanceNumber(prizeInBusd)
   const ticketBuyIsDisabled = status !== LotteryStatus.OPEN || isTransitioning
@@ -255,7 +255,7 @@ const Hero = () => {
         <img src="/images/lottery/ticket-r.png" width="121px" height="72px" alt="" />
       </StarsDecorations>
       <Heading style={{ zIndex: 1 }} mb="8px" scale="md" color="#ffffff" id="lottery-hero-title">
-        {t('The PlaxSwap Lottery')}
+        {t('The PancakeSwap Lottery')}
       </Heading>
       {getHeroHeading()}
       <TicketContainer

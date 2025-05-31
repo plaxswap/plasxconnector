@@ -22,6 +22,8 @@ export interface ApyButtonProps {
   addLiquidityUrl?: string
   useTooltipText?: boolean
   hideButton?: boolean
+  farmCakePerSecond?: string
+  totalMultipliers?: string
 }
 
 const ApyButton: React.FC<React.PropsWithChildren<ApyButtonProps>> = ({
@@ -39,6 +41,8 @@ const ApyButton: React.FC<React.PropsWithChildren<ApyButtonProps>> = ({
   addLiquidityUrl = '',
   useTooltipText,
   hideButton,
+  farmCakePerSecond,
+  totalMultipliers,
 }) => {
   const { t } = useTranslation()
   const { account } = useActiveWeb3React()
@@ -76,7 +80,7 @@ const ApyButton: React.FC<React.PropsWithChildren<ApyButtonProps>> = ({
     <RoiCalculatorModal
       account={account || ''}
       pid={pid}
-      linkLabel={t('Get %symbol%', { symbol: lpLabel })}
+      linkLabel={t('Add %symbol%', { symbol: lpLabel })}
       stakingTokenBalance={userBalanceInFarm}
       stakingTokenSymbol={lpSymbol}
       stakingTokenPrice={lpTokenPrice.toNumber()}
@@ -88,6 +92,8 @@ const ApyButton: React.FC<React.PropsWithChildren<ApyButtonProps>> = ({
       linkHref={addLiquidityUrl}
       isFarm
       rewardCakePerSecond
+      farmCakePerSecond={farmCakePerSecond}
+      totalMultipliers={totalMultipliers}
     />,
     false,
     true,

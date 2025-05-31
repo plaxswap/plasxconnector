@@ -4,7 +4,7 @@ import { Button, AutoRenewIcon, Box, Flex, Message, MessageText, Text } from '@p
 import _noop from 'lodash/noop'
 import { useTranslation } from '@pancakeswap/localization'
 import isUndefinedOrNull from '@pancakeswap/utils/isUndefinedOrNull'
-import { MAX_LOCK_DURATION } from 'config/constants/pools'
+import { MAX_LOCK_DURATION } from '@pancakeswap/pools'
 import BigNumber from 'bignumber.js'
 import { getBalanceAmount, getDecimalAmount } from '@pancakeswap/utils/formatBalance'
 import { useIfoCeiling } from 'state/pools/hooks'
@@ -33,6 +33,7 @@ const LockedModalBody: React.FC<React.PropsWithChildren<LockedModalBodyPropsType
   validator,
   customOverview,
   isRenew,
+  customLockWeekInSeconds,
 }) => {
   const { t } = useTranslation()
   const ceiling = useIfoCeiling()
@@ -42,7 +43,7 @@ const LockedModalBody: React.FC<React.PropsWithChildren<LockedModalBodyPropsType
     onDismiss,
     lockedAmount,
     prepConfirmArg,
-    defaultDuration: isRenew && avgLockDurationsInSeconds,
+    defaultDuration: customLockWeekInSeconds || (isRenew && avgLockDurationsInSeconds),
   })
   const [isMaxSelected, setIsMaxSelected] = useState(false)
 
@@ -122,7 +123,7 @@ const LockedModalBody: React.FC<React.PropsWithChildren<LockedModalBodyPropsType
           duration,
           isMaxSelected,
         })
-      ) : (
+      ) : customLockWeekInSeconds ? null : (
         <Overview
           isValidDuration={isValidDuration}
           openCalculator={_noop}
@@ -137,11 +138,11 @@ const LockedModalBody: React.FC<React.PropsWithChildren<LockedModalBodyPropsType
       {!needsApprove && cakeNeeded ? (
         hasEnoughBalanceToExtend ? (
           <Text fontSize="12px" mt="24px">
-            {t('0.0001 PLAX will be spent to extend')}
+            {t('0.0001 CAKE will be spent to extend')}
           </Text>
         ) : (
           <Message variant="warning" mt="24px">
-            <MessageText maxWidth="200px">{t('0.0001 PLAX required for enabling extension')}</MessageText>
+            <MessageText maxWidth="200px">{t('0.0001 CAKE required for enabling extension')}</MessageText>
           </Message>
         )
       ) : null}

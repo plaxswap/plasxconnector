@@ -23,7 +23,9 @@ export function PageNetworkSupportModal() {
   const foundChain = useMemo(() => chains.find((c) => c.id === chainId), [chainId])
   const historyManager = useHistory()
 
-  const lastValidPath = historyManager?.history?.find((h) => ['/swap', 'liquidity', '/', '/info'].includes(h))
+  const lastValidPath = historyManager?.history?.find((h) =>
+    ['/swap', 'liquidity', '/', '/info', '/v3Info'].includes(h),
+  )
 
   const menuItems = useMenuItems()
   const { pathname, push } = useRouter()
@@ -41,7 +43,7 @@ export function PageNetworkSupportModal() {
   return (
     <Modal title={title || t('Check your network')} hideCloseButton headerBackground="gradientCardHeader">
       <Grid style={{ gap: '16px' }} maxWidth="360px">
-        <Text bold>{t('It’s a Polygon Chain only feature')}</Text>
+        <Text bold>{t('It’s a BNB Smart Chain only feature')}</Text>
 
         {image && (
           <Box mx="auto" my="8px" position="relative" width="100%" minHeight="250px">
@@ -50,7 +52,7 @@ export function PageNetworkSupportModal() {
         )}
         <Text small>
           {t(
-            'Our Pools, Limit, Trading Competition, Prediction, Lottery and NFTs features are currently available only on Polygon Chain! Come over and join the community in the fun!',
+            'Our Pools, Limit, Trading Competition, Prediction, Lottery and NFTs features are currently available only on BNB Chain! Come over and join the community in the fun!',
           )}
         </Text>
         {canSwitch ? (
@@ -59,7 +61,7 @@ export function PageNetworkSupportModal() {
             isLoading={isLoading}
             onClick={() => (isWrongNetwork ? switchNetworkLocal(ChainId.BSC) : switchNetworkAsync(ChainId.BSC))}
           >
-            {t('Switch to %chain%', { chain: 'Polygon Chain' })}
+            {t('Switch to %chain%', { chain: 'BNB Smart Chain' })}
           </Button>
         ) : (
           <Message variant="danger">
@@ -80,9 +82,7 @@ export function PageNetworkSupportModal() {
         )}
         {foundChain && lastValidPath && (
           <NextLink href={lastValidPath ?? ''} passHref>
-            <Button width="100%" as="a">
-              {t('Stay on %chain%', { chain: foundChain.name })}
-            </Button>
+            <Button width="100%">{t('Stay on %chain%', { chain: foundChain.name })}</Button>
           </NextLink>
         )}
       </Grid>

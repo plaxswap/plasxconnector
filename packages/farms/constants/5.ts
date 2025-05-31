@@ -1,5 +1,18 @@
 import { goerliTestnetTokens } from '@pancakeswap/tokens'
-import { SerializedFarmConfig } from '@pancakeswap/farms'
+import { FeeAmount } from '@pancakeswap/v3-sdk'
+import { getAddress } from 'viem'
+import { SerializedFarmConfig } from '..'
+import { defineFarmV3Configs } from '../src/defineFarmV3Configs'
+
+export const farmsV3 = defineFarmV3Configs([
+  {
+    pid: 1,
+    lpAddress: '0xC6D589DC1E1041a45d7347520bdaA113392E7249',
+    token0: goerliTestnetTokens.mockB,
+    token1: goerliTestnetTokens.mockA,
+    feeAmount: FeeAmount.LOW,
+  },
+])
 
 const farms: SerializedFarmConfig[] = [
   {
@@ -18,6 +31,11 @@ const farms: SerializedFarmConfig[] = [
     quoteToken: goerliTestnetTokens.weth,
     token: goerliTestnetTokens.leet,
   },
-].map((p) => ({ ...p, token: p.token.serialize, quoteToken: p.quoteToken.serialize }))
+].map((p) => ({
+  ...p,
+  token: p.token.serialize,
+  quoteToken: p.quoteToken.serialize,
+  lpAddress: getAddress(p.lpAddress),
+}))
 
 export default farms

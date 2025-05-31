@@ -1,21 +1,22 @@
 import { useCallback } from 'react'
 import { useAccount } from 'wagmi'
-import { Contract } from '@ethersproject/contracts'
-import { MaxUint256 } from '@ethersproject/constants'
+import { MaxUint256 } from '@pancakeswap/swap-sdk-core'
 import { useAppDispatch } from 'state'
 import { updateUserAllowance } from 'state/actions'
 import { VaultKey } from 'state/types'
 import { useTranslation } from '@pancakeswap/localization'
-import { useSousChef, useVaultPoolContract } from 'hooks/useContract'
+import { useERC20, useSousChef, useVaultPoolContract } from 'hooks/useContract'
 import { useToast } from '@pancakeswap/uikit'
 import { useCallWithGasPrice } from 'hooks/useCallWithGasPrice'
 import useCatchTxError from 'hooks/useCatchTxError'
 import { ToastDescriptionWithTx } from 'components/Toast'
 import useCakeApprovalStatus from 'hooks/useCakeApprovalStatus'
 import useCakeApprove from 'hooks/useCakeApprove'
+import { useActiveChainId } from 'hooks/useActiveChainId'
 
-export const useApprovePool = (lpContract: Contract, sousId, earningTokenSymbol) => {
+export const useApprovePool = (lpContract: ReturnType<typeof useERC20>, sousId, earningTokenSymbol) => {
   const { toastSuccess } = useToast()
+  const { chainId } = useActiveChainId()
   const { fetchWithCatchTxError, loading: pendingTx } = useCatchTxError()
   const { callWithGasPrice } = useCallWithGasPrice()
   const { t } = useTranslation()
@@ -34,9 +35,10 @@ export const useApprovePool = (lpContract: Contract, sousId, earningTokenSymbol)
           {t('You can now stake in the %symbol% pool!', { symbol: earningTokenSymbol })}
         </ToastDescriptionWithTx>,
       )
-      dispatch(updateUserAllowance({ sousId, account }))
+      dispatch(updateUserAllowance({ sousId, account, chainId }))
     }
   }, [
+    chainId,
     account,
     dispatch,
     lpContract,
@@ -60,7 +62,7 @@ export const useVaultApprove = (vaultKey: VaultKey, setLastUpdated: () => void) 
   return useCakeApprove(
     setLastUpdated,
     vaultPoolContract?.address,
-    t('You can now stake in the %symbol% vault!', { symbol: 'PLAX' }),
+    t('You can now stake in the %symbol% vault!', { symbol: 'CAKE' }),
   )
 }
 

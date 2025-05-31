@@ -1,5 +1,4 @@
-import { MaxUint256 } from '@ethersproject/constants'
-import { parseUnits } from '@ethersproject/units'
+import { parseEther, parseUnits } from 'viem'
 import { useTranslation } from '@pancakeswap/localization'
 import { bscTokens } from '@pancakeswap/tokens'
 import {
@@ -17,7 +16,6 @@ import {
   useTooltip,
   IfoHasVestingNotice,
 } from '@pancakeswap/uikit'
-import { useAccount } from 'wagmi'
 import BigNumber from 'bignumber.js'
 import ApproveConfirmButtons from 'components/ApproveConfirmButtons'
 import { ToastDescriptionWithTx } from 'components/Toast'
@@ -25,10 +23,8 @@ import { DEFAULT_TOKEN_DECIMAL } from 'config'
 import { Ifo, PoolIds } from 'config/constants/types'
 import useApproveConfirmTransaction from 'hooks/useApproveConfirmTransaction'
 import { useCallWithGasPrice } from 'hooks/useCallWithGasPrice'
-import { useERC20 } from 'hooks/useContract'
 import { useMemo, useState } from 'react'
 import { formatNumber, getBalanceAmount } from '@pancakeswap/utils/formatBalance'
-import { requiresApproval } from 'utils/requiresApproval'
 import { PublicIfoData, WalletIfoData } from 'views/Ifos/types'
 
 interface Props {
@@ -45,7 +41,7 @@ interface Props {
 const multiplierValues = [0.1, 0.25, 0.5, 0.75, 1]
 
 // Default value for transaction setting, tweak based on BSC network congestion.
-const gasPrice = parseUnits('10', 'gwei').toString()
+const gasPrice = parseEther('10', 'gwei')
 
 const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
   poolId,
@@ -66,24 +62,16 @@ const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
   const { amountTokenCommittedInLP } = userPoolCharacteristics
   const { contract } = walletIfoData
   const [value, setValue] = useState('')
-  const { address: account } = useAccount()
   const { callWithGasPrice } = useCallWithGasPrice()
-  const raisingTokenContractReader = useERC20(currency.address, false)
-  const raisingTokenContractApprover = useERC20(currency.address)
   const { t } = useTranslation()
   const valueWithTokenDecimals = new BigNumber(value).times(DEFAULT_TOKEN_DECIMAL)
-  const label = currency === bscTokens.cake ? t('Max. PLAX entry') : t('Max. token entry')
+  const label = currency === bscTokens.cake ? t('Max. CAKE entry') : t('Max. token entry')
 
   const { isApproving, isApproved, isConfirmed, isConfirming, handleApprove, handleConfirm } =
     useApproveConfirmTransaction({
-      onRequiresApproval: async () => {
-        return requiresApproval(raisingTokenContractReader, account, contract.address)
-      },
-      onApprove: () => {
-        return callWithGasPrice(raisingTokenContractApprover, 'approve', [contract.address, MaxUint256], {
-          gasPrice,
-        })
-      },
+      token: currency,
+      spender: contract.address,
+      minAmount: value ? parseUnits(value as `${number}`, currency.decimals) : undefined,
       onApproveSuccess: ({ receipt }) => {
         toastSuccess(
           t('Successfully Enabled!'),
@@ -94,7 +82,7 @@ const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
       },
       onConfirm: () => {
         return callWithGasPrice(
-          contract,
+          contract as any,
           'depositPool',
           [valueWithTokenDecimals.toString(), poolId === PoolIds.poolBasic ? 0 : 1],
           {
@@ -129,17 +117,17 @@ const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
   }, [maximumTokenEntry, userCurrencyBalance])
 
   const basicTooltipContent = t(
-    'For the private sale, each eligible participant will be able to commit any amount of PLAX up to the maximum commit limit, which is published along with the IFO voting proposal.',
+    'For the private sale, each eligible participant will be able to commit any amount of CAKE up to the maximum commit limit, which is published along with the IFO voting proposal.',
   )
 
   const unlimitedToolipContent = (
     <Box>
-      <Text display="inline">{t('For the public sale, Max PLAX entry is capped by')} </Text>
+      <Text display="inline">{t('For the public sale, Max CAKE entry is capped by')} </Text>
       <Text bold display="inline">
-        {t('the number of iPLAX.')}{' '}
+        {t('the number of iCAKE.')}{' '}
       </Text>
       <Text display="inline">
-        {t('Lock more PLAX for longer durations to increase the maximum number of PLAX you can commit to the sale.')}
+        {t('Lock more CAKE for longer durations to increase the maximum number of CAKE you can commit to the sale.')}
       </Text>
     </Box>
   )
@@ -168,7 +156,7 @@ const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
             <Flex flexGrow={1} justifyContent="flex-end">
               <Image
                 src={
-                  ifo.currency.symbol === 'PLAX'
+                  ifo.currency.symbol === 'CAKE'
                     ? '/images/cake.svg'
                     : `/images/farms/${currency.symbol.split(' ')[0].toLowerCase()}.svg`
                 }
@@ -201,7 +189,7 @@ const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
             >
               {valueWithTokenDecimals.isGreaterThan(userCurrencyBalance)
                 ? t('Insufficient Balance')
-                : t('Exceeded max PLAX entry')}
+                : t('Exceeded max CAKE entry')}
             </Text>
           )}
           <Text color="textSubtle" textAlign="right" fontSize="12px" mb="16px">
@@ -225,19 +213,19 @@ const ContributeModal: React.FC<React.PropsWithChildren<Props>> = ({
           {vestingInformation.percentage > 0 && <IfoHasVestingNotice url={articleUrl} />}
           <Text color="textSubtle" fontSize="12px" mb="24px">
             {t(
-              'If you don’t commit enough PLAX, you may not receive a meaningful amount of IFO tokens, or you may not receive any IFO tokens at all.',
+              'If you don’t commit enough CAKE, you may not receive a meaningful amount of IFO tokens, or you may not receive any IFO tokens at all.',
             )}
             <Link
               fontSize="12px"
               display="inline"
-              href="https://docs.plaxswap.io/products/ifo-initial-farm-offering"
+              href="https://docs.pancakeswap.finance/products/ifo-initial-farm-offering"
               external
             >
               {t('Read more')}
             </Link>
           </Text>
           <ApproveConfirmButtons
-            isApproveDisabled={isConfirmed || isConfirming || isApproved}
+            isApproveDisabled={isConfirmed || isConfirming || isApproved || !value}
             isApproving={isApproving}
             isConfirmDisabled={
               !isApproved || isConfirmed || valueWithTokenDecimals.isNaN() || valueWithTokenDecimals.eq(0) || isWarning

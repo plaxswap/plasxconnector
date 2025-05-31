@@ -11,10 +11,11 @@ import { getFarmsPriceHelperLpFiles } from 'config/constants/priceHelperLps'
 import stringify from 'fast-json-stable-stringify'
 import keyBy from 'lodash/keyBy'
 import type { AppState } from 'state'
-import { multicallv2 } from 'utils/multicall'
 import { verifyBscNetwork } from 'utils/verifyBscNetwork'
 import { chains } from 'utils/wagmi'
+import { getViemClients } from 'utils/viem'
 import splitProxyFarms from 'views/Farms/components/YieldBooster/helpers/splitProxyFarms'
+import { Address } from 'wagmi'
 import { resetUserState } from '../global/actions'
 import {
   fetchFarmUserAllowances,
@@ -24,26 +25,31 @@ import {
 } from './fetchFarmUser'
 import { fetchMasterChefFarmPoolLength } from './fetchMasterChefData'
 
-const fetchFarmPublicDataPkg = async ({ pids, chainId, chain }): Promise<[SerializedFarm[], number, number]> => {
+const fetchFarmPublicDataPkg = async ({
+  pids,
+  chainId,
+  chain,
+}): Promise<[SerializedFarm[], number, number, string]> => {
   const farmsConfig = await getFarmConfig(chainId)
   const farmsCanFetch = farmsConfig.filter((farmConfig) => pids.includes(farmConfig.pid))
   const priceHelperLpsConfig = getFarmsPriceHelperLpFiles(chainId)
 
-  const { farmsWithPrice, poolLength, regularCakePerBlock } = await farmFetcher.fetchFarms({
+  const { farmsWithPrice, poolLength, regularCakePerBlock, totalRegularAllocPoint } = await farmFetcher.fetchFarms({
     chainId,
     isTestnet: chain.testnet,
     farms: farmsCanFetch.concat(priceHelperLpsConfig),
   })
-  return [farmsWithPrice, poolLength, regularCakePerBlock]
+  return [farmsWithPrice, poolLength, regularCakePerBlock, totalRegularAllocPoint]
 }
 
-export const farmFetcher = createFarmFetcher(multicallv2)
+export const farmFetcher = createFarmFetcher(getViemClients)
 
 const initialState: SerializedFarmsState = {
   data: [],
   chainId: null,
   loadArchivedFarmsData: false,
   userDataLoaded: false,
+  totalRegularAllocPoint: '0',
   loadingKeys: {},
 }
 
@@ -55,23 +61,24 @@ export const fetchInitialFarmsData = createAsyncThunk<
     state: AppState
   }
 >('farms/fetchInitialFarmsData', async ({ chainId }) => {
-  const farmDataList = await getFarmConfig(chainId)
-  return {
-    data: farmDataList.map((farm) => ({
-      ...farm,
-      userData: {
-        allowance: '0',
-        tokenBalance: '0',
-        stakedBalance: '0',
-        earnings: '0',
-      },
-    })),
-    chainId,
-  }
+  return getFarmConfig(chainId).then((farmDataList) => {
+    return {
+      data: farmDataList.map((farm) => ({
+        ...farm,
+        userData: {
+          allowance: '0',
+          tokenBalance: '0',
+          stakedBalance: '0',
+          earnings: '0',
+        },
+      })),
+      chainId,
+    }
+  })
 })
 
 export const fetchFarmsPublicDataAsync = createAsyncThunk<
-  [SerializedFarm[], number, number],
+  [SerializedFarm[], number, number, string],
   { pids: number[]; chainId: number },
   {
     state: AppState
@@ -85,12 +92,10 @@ export const fetchFarmsPublicDataAsync = createAsyncThunk<
     }
     const chain = chains.find((c) => c.id === chainId)
     if (!chain || !farmFetcher.isChainSupported(chain.id)) throw new Error('chain not supported')
-    try {
-      return fetchFarmPublicDataPkg({ pids, chainId, chain })
-    } catch (error) {
+    return fetchFarmPublicDataPkg({ pids, chainId, chain }).catch((error) => {
       console.error(error)
       throw error
-    }
+    })
   },
   {
     condition: (arg, { getState }) => {
@@ -181,7 +186,7 @@ async function getNormalFarmsStakeValue(farms, account, chainId) {
 
 export const fetchFarmUserDataAsync = createAsyncThunk<
   FarmUserDataResponse[],
-  { account: string; pids: number[]; proxyAddress?: string; chainId: number },
+  { account: Address; pids: number[]; proxyAddress?: Address; chainId: number },
   {
     state: AppState
   }
@@ -201,8 +206,10 @@ export const fetchFarmUserDataAsync = createAsyncThunk<
       const { normalFarms, farmsWithProxy } = splitProxyFarms(farmsCanFetch)
 
       const [proxyAllowances, normalAllowances] = await Promise.all([
-        getBoostedFarmsStakeValue(farmsWithProxy, account, chainId, proxyAddress),
-        getNormalFarmsStakeValue(normalFarms, account, chainId),
+        farmsWithProxy
+          ? getBoostedFarmsStakeValue(farmsWithProxy, account, chainId, proxyAddress)
+          : Promise.resolve([]),
+        normalFarms ? getNormalFarmsStakeValue(normalFarms, account, chainId) : Promise.resolve([]),
       ])
 
       return [...proxyAllowances, ...normalAllowances]
@@ -227,7 +234,7 @@ type UnknownAsyncThunkFulfilledOrPendingAction =
   | UnknownAsyncThunkPendingAction
   | UnknownAsyncThunkRejectedAction
 
-const serializeLoadingKey = (
+export const serializeLoadingKey = (
   action: UnknownAsyncThunkFulfilledOrPendingAction,
   suffix: UnknownAsyncThunkFulfilledOrPendingAction['meta']['requestStatus'],
 ) => {
@@ -266,7 +273,7 @@ export const farmsSlice = createSlice({
 
     // Update farms with live data
     builder.addCase(fetchFarmsPublicDataAsync.fulfilled, (state, action) => {
-      const [farmPayload, poolLength, regularCakePerBlock] = action.payload
+      const [farmPayload, poolLength, regularCakePerBlock, totalRegularAllocPoint] = action.payload
       const farmPayloadPidMap = keyBy(farmPayload, 'pid')
 
       state.data = state.data.map((farm) => {
@@ -275,6 +282,7 @@ export const farmsSlice = createSlice({
       })
       state.poolLength = poolLength
       state.regularCakePerBlock = regularCakePerBlock
+      state.totalRegularAllocPoint = totalRegularAllocPoint
     })
 
     // Update farms with user data

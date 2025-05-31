@@ -8,13 +8,13 @@ import { CAKE } from '@pancakeswap/tokens'
 import tryParseAmount from '@pancakeswap/utils/tryParseAmount'
 import { useTradeExactOut } from 'hooks/Trades'
 import { useSwapCallback } from 'hooks/useSwapCallback'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { useSwapCallArguments } from 'hooks/useSwapCallArguments'
 import { INITIAL_ALLOWED_SLIPPAGE } from 'config/constants'
 import BigNumber from 'bignumber.js'
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 
 export const useCakeEnable = (enableAmount: BigNumber) => {
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   const dispatch = useAppDispatch()
   const [pendingEnableTx, setPendingEnableTx] = useState(false)
   const [transactionHash, setTransactionHash] = useState<string>()
@@ -31,10 +31,10 @@ export const useCakeEnable = (enableAmount: BigNumber) => {
 
   useEffect(() => {
     if (pendingEnableTx && transactionHash && !isTransactionPending) {
-      dispatch(updateUserBalance({ sousId: 0, account }))
+      dispatch(updateUserBalance({ sousId: 0, account, chainId }))
       setPendingEnableTx(isTransactionPending)
     }
-  }, [account, dispatch, transactionHash, pendingEnableTx, isTransactionPending])
+  }, [account, dispatch, transactionHash, pendingEnableTx, isTransactionPending, chainId])
 
   const handleEnable = useCallback(() => {
     if (!swapCallback) {

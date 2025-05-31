@@ -10,13 +10,14 @@ import { ExpandableLabel } from "../Button";
 import { Link, LinkExternal } from "../Link";
 import { HelpIcon } from "../Svg";
 import { Text } from "../Text";
+import { FarmMultiplierInfo } from "../../widgets/Farm/components/FarmMultiplierInfo";
 
-const Footer = styled(Flex)`
+export const Footer = styled(Flex)`
   width: 100%;
   background: ${({ theme }) => theme.colors.dropdown};
 `;
 
-const BulletList = styled.ul`
+export const BulletList = styled.ul`
   list-style-type: none;
   margin-top: 16px;
   padding: 0;
@@ -48,6 +49,8 @@ interface RoiCalculatorFooterProps {
   isLocked?: boolean;
   stableSwapAddress?: string;
   stableLpFee?: number;
+  farmCakePerSecond?: string;
+  totalMultipliers?: string;
 }
 
 const RoiCalculatorFooter: React.FC<React.PropsWithChildren<RoiCalculatorFooterProps>> = ({
@@ -64,57 +67,22 @@ const RoiCalculatorFooter: React.FC<React.PropsWithChildren<RoiCalculatorFooterP
   isLocked = false,
   stableSwapAddress,
   stableLpFee,
+  farmCakePerSecond,
+  totalMultipliers,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
+  const isAptos = rewardCakePerSecond === true;
+
+  const multiplierTooltipContent = FarmMultiplierInfo({
+    farmCakePerSecond: farmCakePerSecond ?? "-",
+    totalMultipliers: totalMultipliers ?? "-",
+  });
   const {
     targetRef: multiplierRef,
     tooltip: multiplierTooltip,
     tooltipVisible: multiplierTooltipVisible,
-  } = useTooltip(
-    <>
-      {rewardCakePerSecond ? (
-        <>
-          <Text>
-            {t(
-              "The Multiplier represents the proportion of PLAX rewards each farm receives, as a proportion of the PLAX produced each second."
-            )}
-          </Text>
-          <Text my="24px">
-            {" "}
-            {t("For example, if a 1x farm received 1 PLAX per second, a 40x farm would receive 40 PLAX per second.")}
-          </Text>
-          <Text>{t("This amount is already included in all APR calculations for the farm.")}</Text>
-        </>
-      ) : (
-        <>
-          <Text>
-            {t(
-              "The Multiplier represents the proportion of PLAX rewards each farm receives, as a proportion of the PLAX produced each block."
-            )}
-          </Text>
-          <Text my="24px">
-            {" "}
-            {t("For example, if a 1x farm received 1 PLAX per block, a 40x farm would receive 40 PLAX per block.")}
-          </Text>
-          <Text>
-            {t(
-              "We have recently rebased multipliers by a factor of 10, this is only a visual change and does not affect the amount of PLAX each farm receives."
-            )}
-          </Text>
-          <Link
-            mt="8px"
-            display="inline"
-            href="https://medium.com/pancakeswap/farm-mutlipliers-visual-update-1f5f5f615afd"
-            external
-          >
-            {t("Read more")}
-          </Link>
-        </>
-      )}
-    </>,
-    { placement: "top-end", tooltipOffset: [20, 10] }
-  );
+  } = useTooltip(multiplierTooltipContent, { placement: "top-end", tooltipOffset: [20, 10] });
 
   const gridRowCount = isFarm ? 4 : 2;
   const lpRewardsAPR = useMemo(
@@ -154,7 +122,7 @@ const RoiCalculatorFooter: React.FC<React.PropsWithChildren<RoiCalculatorFooterP
                   {displayApr}%
                 </Text>
                 <Text color="textSubtle" small>
-                  *{t("Base APR (PLAX yield only)")}
+                  *{t("Base APR (CAKE yield only)")}
                 </Text>
                 <Text small textAlign="right">
                   {apr.toFixed(2)}%
@@ -215,19 +183,27 @@ const RoiCalculatorFooter: React.FC<React.PropsWithChildren<RoiCalculatorFooterP
                   </Text>
                 </li>
                 <li>
-                  <Text fontSize="12px" textAlign="center" color="textSubtle" display="inline">
-                    {t(
-                      "To provide stable estimates, APR figures are calculated once per day on the farm page. For real time APR, please visit the"
-                    )}
-                    <Link
-                      style={{ display: "inline-block" }}
-                      fontSize="12px"
-                      ml="3px"
-                      href={`/info${stableSwapAddress ? `/pairs/${stableSwapAddress}?type=stableSwap` : ""}`}
-                    >
-                      {t("Info Page")}
-                    </Link>
-                  </Text>
+                  {isAptos ? (
+                    <Text fontSize="12px" textAlign="center" color="textSubtle" display="inline">
+                      {t(
+                        "To provide stable estimates, APR figures are calculated and updated daily using volume data from CoinMarketCap"
+                      )}
+                    </Text>
+                  ) : (
+                    <Text fontSize="12px" textAlign="center" color="textSubtle" display="inline">
+                      {t(
+                        "To provide stable estimates, APR figures are calculated once per day on the farm page. For real time APR, please visit the"
+                      )}
+                      <Link
+                        style={{ display: "inline-block" }}
+                        fontSize="12px"
+                        ml="3px"
+                        href={`/info${stableSwapAddress ? `/pairs/${stableSwapAddress}?type=stableSwap` : ""}`}
+                      >
+                        {t("Info Page")}
+                      </Link>
+                    </Text>
+                  )}
                 </li>
               </>
             )}

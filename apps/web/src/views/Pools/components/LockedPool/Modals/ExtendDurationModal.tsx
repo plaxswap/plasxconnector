@@ -3,7 +3,7 @@ import { Modal, Box } from '@pancakeswap/uikit'
 import _noop from 'lodash/noop'
 import useTheme from 'hooks/useTheme'
 import { useBUSDCakeAmount } from 'hooks/useBUSDPrice'
-import { MAX_LOCK_DURATION } from 'config/constants/pools'
+import { MAX_LOCK_DURATION } from '@pancakeswap/pools'
 import { useTranslation } from '@pancakeswap/localization'
 import BigNumber from 'bignumber.js'
 import { useIfoCeiling } from 'state/pools/hooks'
@@ -26,6 +26,7 @@ const ExtendDurationModal: React.FC<ExtendDurationModal> = ({
   currentBalance,
   lockStartTime,
   isRenew,
+  customLockWeekInSeconds,
 }) => {
   const { theme } = useTheme()
   const ceiling = useIfoCeiling()
@@ -119,6 +120,7 @@ const ExtendDurationModal: React.FC<ExtendDurationModal> = ({
           prepConfirmArg={prepConfirmArg}
           customOverview={customOverview}
           isRenew={isRenew}
+          customLockWeekInSeconds={customLockWeekInSeconds}
         />
       </Modal>
     </RoiCalculatorModalProvider>

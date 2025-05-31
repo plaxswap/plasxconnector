@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Flex, Text, Skeleton, Button, ArrowForwardIcon, Balance, NextLinkFromReactRouter } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
 import { useIntersectionObserver } from '@pancakeswap/hooks'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import styled from 'styled-components'
 import { fetchLottery, fetchCurrentLotteryId } from 'state/lottery/helpers'
 import { getBalanceAmount } from '@pancakeswap/utils/formatBalance'
@@ -23,7 +23,7 @@ const LotteryCardContent = () => {
   const { t } = useTranslation()
   const { observerRef, isIntersecting } = useIntersectionObserver()
   const [loadData, setLoadData] = useState(false)
-  const cakePriceBusd = usePriceCakeBusd({ forceMainnet: true })
+  const cakePriceBusd = usePriceCakeUSD()
   const { data: currentLotteryId } = useSWRImmutable(loadData ? ['currentLotteryId'] : null, fetchCurrentLotteryId, {
     refreshInterval: SLOW_INTERVAL,
   })
@@ -35,7 +35,7 @@ const LotteryCardContent = () => {
     },
   )
 
-  const cakePrizesText = t('%cakePrizeInUsd% in PLAX prizes this round', { cakePrizeInUsd: cakePriceBusd.toString() })
+  const cakePrizesText = t('%cakePrizeInUsd% in CAKE prizes this round', { cakePrizeInUsd: cakePriceBusd.toString() })
   const [pretext, prizesThisRound] = cakePrizesText.split(cakePriceBusd.toString())
   const amountCollectedInCake = currentLottery ? parseFloat(currentLottery.amountCollectedInCake) : null
   const currentLotteryPrize = amountCollectedInCake ? cakePriceBusd.times(amountCollectedInCake) : null
@@ -75,7 +75,7 @@ const LotteryCardContent = () => {
           {prizesThisRound}
         </Text>
         <Text color="white" mb="40px">
-          {t('Buy tickets with PLAX, win PLAX if your numbers match')}
+          {t('Buy tickets with CAKE, win CAKE if your numbers match')}
         </Text>
       </Flex>
       <Flex alignItems="center" justifyContent="center">

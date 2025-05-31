@@ -1,17 +1,65 @@
-import { StaticJsonRpcProvider } from '@ethersproject/providers'
+import { ChainId } from '@pancakeswap/sdk'
+import { createPublicClient, http, PublicClient } from 'viem'
+import { bsc, bscTestnet, goerli, mainnet } from 'viem/chains'
 
-export const bscProvider = new StaticJsonRpcProvider(
-  {
-    url: 'https://rpc.ankr.com/polygon/8a211590835087845ff22ee4159e7dc636f0cce7cfb1ecc483fc0fb1cbb99599',
-    skipFetchSetup: true,
-  },
-  137,
-)
+const requireCheck = [ETH_NODE, GOERLI_NODE, BSC_NODE, BSC_TESTNET_NODE]
+requireCheck.forEach((node) => {
+  if (!node) {
+    throw new Error('Missing env var')
+  }
+})
 
-export const bscTestnetProvider = new StaticJsonRpcProvider(
-  {
-    url: 'https://bsc-testnet.nodereal.io/v1/e9a36765eb8a40b9bd12e680a1fd2bc5',
-    skipFetchSetup: true,
+const mainnetClient = createPublicClient({
+  chain: mainnet,
+  transport: http(ETH_NODE),
+  batch: {
+    multicall: {
+      batchSize: 1024 * 200,
+    },
   },
-  80001,
-)
+})
+
+export const bscClient: PublicClient = createPublicClient({
+  chain: bsc,
+  transport: http(BSC_NODE),
+  batch: {
+    multicall: {
+      batchSize: 1024 * 200,
+    },
+  },
+})
+
+export const bscTestnetClient: PublicClient = createPublicClient({
+  chain: bscTestnet,
+  transport: http(BSC_TESTNET_NODE),
+  batch: {
+    multicall: {
+      batchSize: 1024 * 200,
+    },
+  },
+})
+
+const goerliClient = createPublicClient({
+  chain: goerli,
+  transport: http(GOERLI_NODE),
+  batch: {
+    multicall: {
+      batchSize: 1024 * 200,
+    },
+  },
+})
+
+export const viemProviders = ({ chainId }: { chainId?: ChainId }): PublicClient => {
+  switch (chainId) {
+    case ChainId.ETHEREUM:
+      return mainnetClient
+    case ChainId.BSC:
+      return bscClient
+    case ChainId.BSC_TESTNET:
+      return bscTestnetClient
+    case ChainId.GOERLI:
+      return goerliClient
+    default:
+      return bscClient
+  }
+}

@@ -14,8 +14,8 @@ import {
   OVER,
   REGISTRATION,
 } from 'config/constants/trading-competition/phases'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { ChainId } from '@pancakeswap/sdk'
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 import { DARKBG, MIDBLUEBG, MIDBLUEBG_DARK } from './pageSectionStyles'
 import EasterStormBunny from './pngs/easter-storm.png'
 import Countdown from './components/Countdown'
@@ -49,11 +49,11 @@ const BannerFlex = styled(Flex)`
 `
 
 const EasterCompetition = () => {
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   const { isMobile } = useMatchBreakpoints()
   const { profile, isLoading: isProfileLoading } = useProfile()
   const { isDark } = useTheme()
-  const tradingCompetitionContract = useTradingCompetitionContractEaster(false)
+  const tradingCompetitionContract = useTradingCompetitionContractEaster()
   const [currentPhase, setCurrentPhase] = useState(CompetitionPhases.OVER)
   const { registrationSuccessful, claimSuccessful, onRegisterSuccess, onClaimSuccess } = useRegistrationClaimStatus()
   const [userTradingInformation, setUserTradingInformation] = useState({
@@ -95,12 +95,12 @@ const EasterCompetition = () => {
 
   useEffect(() => {
     const fetchCompetitionInfoContract = async () => {
-      const competitionStatus = await tradingCompetitionContract.currentStatus()
+      const competitionStatus = await tradingCompetitionContract.read.currentStatus()
       setCurrentPhase(SmartContractPhases[competitionStatus])
     }
 
     const fetchUserContract = async () => {
-      const user = await tradingCompetitionContract.claimInformation(account)
+      const user = await tradingCompetitionContract.read.claimInformation([account])
       const userObject = {
         isLoading: false,
         account,

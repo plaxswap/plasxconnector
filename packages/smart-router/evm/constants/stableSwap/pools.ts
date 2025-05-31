@@ -1,8 +1,8 @@
 import { ChainId } from '@pancakeswap/sdk'
 
-import { StableSwapPool } from '../../types/pool'
-import { pools as bscPools } from './137'
-import { pools as bscTestnetPools } from './80001'
+import { StableSwapPool } from './types'
+import { pools as bscPools } from './56'
+import { pools as bscTestnetPools } from './97'
 
 export type StableSwapPoolMap<TChainId extends number> = {
   [chainId in TChainId]: StableSwapPool[]

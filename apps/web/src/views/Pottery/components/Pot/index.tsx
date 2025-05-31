@@ -2,7 +2,7 @@ import styled from 'styled-components'
 import { useState, useCallback, useMemo } from 'react'
 import { Flex, Box, Card, Text, useMatchBreakpoints, Balance, ButtonTabMenu } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { getBalanceNumber } from '@pancakeswap/utils/formatBalance'
 import { usePotteryData } from 'state/pottery/hook'
 import Deposit from './Deposit/index'
@@ -66,7 +66,7 @@ const BalanceStyle = styled(Balance)`
 
 const Pot: React.FC<React.PropsWithChildren> = () => {
   const { t } = useTranslation()
-  const cakePriceBusd = usePriceCakeBusd()
+  const cakePriceBusd = usePriceCakeUSD()
   const { isMobile } = useMatchBreakpoints()
   const { publicData } = usePotteryData()
 
@@ -105,9 +105,9 @@ const Pot: React.FC<React.PropsWithChildren> = () => {
               <Box>
                 <CardHeader
                   title={t('Pottery')}
-                  subTitle={t('Stake PLAX, Earn PLAX, Win PLAX')}
-                  primarySrc="/images/tokens/0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82.svg"
-                  secondarySrc="/images/tokens/pot-icon.svg"
+                  subTitle={t('Stake CAKE, Earn CAKE, Win CAKE')}
+                  primarySrc="https://tokens.pancakeswap.finance/images/0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82.png"
+                  secondarySrc="/images/pot-icon.svg"
                 />
                 {activeTab === POT_CATEGORY.Deposit ? <Deposit /> : <Claim />}
               </Box>

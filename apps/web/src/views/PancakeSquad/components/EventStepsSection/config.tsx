@@ -35,7 +35,7 @@ const stepsConfigBuilder = ({ t, userInfos, eventInfos, userStatus, account, the
         eventStatus: [SaleStatusEnum.Pending, SaleStatusEnum.Premint],
       }),
       title: t('Activate your profile'),
-      bodyText: [t('You’ll need an active Plaxswap Profile to buy Minting Tickets and mint a Plaxswap Squad NFT!')],
+      bodyText: [t('You’ll need an active PancakeSwap Profile to buy Minting Tickets and mint a Pancake Squad NFT!')],
       buttons: (
         <>
           <ActivateProfileButton userStatus={userStatus} t={t} />
@@ -50,17 +50,17 @@ const stepsConfigBuilder = ({ t, userInfos, eventInfos, userStatus, account, the
         hasProfileActivated,
         eventStatus: [SaleStatusEnum.Pending, SaleStatusEnum.Premint],
       }),
-      title: t('Hold PLAX'),
-      bodyText: [t('Each NFT costs PLAX to mint. Remember you also need POL to cover transaction fees too!')],
+      title: t('Hold CAKE'),
+      bodyText: [t('Each NFT costs CAKE to mint. Remember you also need BNB to cover transaction fees too!')],
       buttons: (
         <>
           <Button
             as="a"
-            href="https://plaxswap.io/swap?outputCurrency=0x7972De0F17Ae5dC02385A863595CC74168F6D550&chainId=137"
+            href="https://pancakeswap.finance/swap?outputCurrency=0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82&chainId=56"
             target="_blank"
             width="100%"
           >
-            {t('Buy PLAX')}
+            {t('Buy CAKE')}
           </Button>
         </>
       ),
@@ -116,7 +116,7 @@ const stepsConfigBuilder = ({ t, userInfos, eventInfos, userStatus, account, the
       }),
       title: t('Claim Phase'),
       bodyText: [
-        t('During this phase, any wallet holding a Squad Ticket can redeem their ticket to claim a Plaxswap Squad NFT.'),
+        t('During this phase, any wallet holding a Squad Ticket can redeem their ticket to claim a Pancake Squad NFT.'),
       ],
       buttons: (
         <>

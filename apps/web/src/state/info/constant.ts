@@ -1,29 +1,36 @@
 import { BLOCKS_CLIENT, BLOCKS_CLIENT_ETH, INFO_CLIENT, INFO_CLIENT_ETH } from 'config/constants/endpoints'
 import { infoClientETH, infoClient, infoStableSwapClient } from 'utils/graphql'
+import { GraphQLClient } from 'graphql-request'
 
 import { ChainId } from '@pancakeswap/sdk'
 import {
   ETH_TOKEN_BLACKLIST,
   PCS_ETH_START,
-  // PCS_POLYGON_START,
   PCS_V2_START,
   TOKEN_BLACKLIST,
   BSC_TOKEN_WHITELIST,
   ETH_TOKEN_WHITELIST,
-  // POLYGON_TOKEN_BLACKLIST,
-  // POLYGON_TOKEN_WHITELIST,
 } from 'config/constants/info'
 
-export type MultiChainName = 'BSC' | 'ETH'
+export type MultiChainName = 'BSC' | 'ETH' | 'BSC_TESTNET'
+
+export type MultiChainNameExtend = MultiChainName | 'BSC_TESTNET'
+
+export const multiChainName: Record<number | string, MultiChainNameExtend> = {
+  [ChainId.BSC]: 'BSC',
+  [ChainId.ETHEREUM]: 'ETH',
+  [ChainId.BSC_TESTNET]: 'BSC_TESTNET',
+}
 
 export const multiChainQueryMainToken = {
-  BSC: 'POL',
+  BSC: 'BNB',
   ETH: 'ETH',
 }
 
 export const multiChainBlocksClient = {
   BSC: BLOCKS_CLIENT,
   ETH: BLOCKS_CLIENT_ETH,
+  BSC_TESTNET: 'https://api.thegraph.com/subgraphs/name/lengocphuc99/bsc_testnet-blocks',
 }
 
 export const multiChainStartTime = {
@@ -66,10 +73,14 @@ export const multiChainTokenWhiteList = {
   ETH: ETH_TOKEN_WHITELIST,
 }
 
-export const getMultiChainQueryEndPointWithStableSwap = (chainName: MultiChainName) => {
+export const getMultiChainQueryEndPointWithStableSwap = (chainName: MultiChainName): GraphQLClient => {
   const isStableSwap = checkIsStableSwap()
   if (isStableSwap) return infoStableSwapClient
   return multiChainQueryClient[chainName]
+}
+
+export const v2SubgraphTokenName = {
+  '0x738d96caf7096659db4c1afbf1e1bdfd281f388c': 'Ankr Staked MATIC',
 }
 
 export const checkIsStableSwap = () => window.location.href.includes('stableSwap')

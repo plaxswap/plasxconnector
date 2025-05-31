@@ -10,7 +10,7 @@ interface BridgeInfo {
 export const bridgeInfo: BridgeInfo[] = [
   {
     platform: 'Pancake Bridge',
-    symbol: 'PLAX',
+    symbol: 'CAKE',
     url: 'https://bridge.pancakeswap.finance/aptos',
   },
   {

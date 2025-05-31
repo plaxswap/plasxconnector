@@ -1,203 +1,163 @@
-import {
-  Cake,
-  CakeFlexibleSideVaultV2,
-  CakeVaultV2,
-  Erc20,
-  Erc20Bytes32,
-  Erc721collection,
-  Multicall,
-  Weth,
-  Zap,
-} from 'config/abi/types'
-import zapAbi from 'config/abi/zap.json'
-import { useProviderOrSigner } from 'hooks/useProviderOrSigner'
+import { getPoolContractBySousId } from '@pancakeswap/pools'
+
+import { erc20ABI, useWalletClient, usePublicClient } from 'wagmi'
+import { Address, Abi } from 'viem'
+
+import addresses from 'config/constants/contracts'
 import { useMemo } from 'react'
 import { getMulticallAddress, getPredictionsV1Address, getZapAddress } from 'utils/addressHelpers'
 import {
-  getAnniversaryAchievementContract,
+  getContract,
   getBCakeFarmBoosterContract,
   getBCakeFarmBoosterProxyFactoryContract,
   getBCakeProxyContract,
-  getBep20Contract,
   getBunnyFactoryContract,
-  getBunnySpecialCakeVaultContract,
-  getBunnySpecialContract,
-  getBunnySpecialLotteryContract,
-  getBunnySpecialPredictionContract,
-  getBunnySpecialXmasContract,
-  getCakeContract,
   getCakeFlexibleSideVaultV2Contract,
   getCakePredictionsContract,
   getCakeVaultV2Contract,
   getChainlinkOracleContract,
-  getClaimRefundContract,
   getCrossFarmingProxyContract,
-  getEasterNftContract,
-  getErc721CollectionContract,
-  getErc721Contract,
   getFarmAuctionContract,
   getIfoCreditAddressContract,
-  getIfoV1Contract,
-  getIfoV2Contract,
-  getIfoV3Contract,
   getLotteryV2Contract,
-  getMasterchefContract,
-  getMasterchefV1Contract,
+  getMasterChefContract,
   getNftMarketContract,
   getNftSaleContract,
   getNonBscVaultContract,
-  getPancakeBunniesContract,
-  getPancakeSquadContract,
   getPointCenterIfoContract,
   getPotteryDrawContract,
   getPotteryVaultContract,
-  getPredictionsContract,
+  getPredictionsV2Contract,
   getPredictionsV1Contract,
   getProfileContract,
-  getSouschefContract,
   getTradingCompetitionContractEaster,
   getTradingCompetitionContractFanToken,
   getTradingCompetitionContractMobox,
   getTradingCompetitionContractMoD,
   getStableSwapNativeHelperContract,
+  getSidContract,
+  getTradingRewardContract,
+  getV3MigratorContract,
+  getMasterChefV3Contract,
+  getV3AirdropContract,
+  getUnsContract,
+  getAffiliateProgramContract,
 } from 'utils/contractHelpers'
-import { useSigner } from 'wagmi'
 
-// Imports below migrated from Exchange useContract.ts
-import { Contract } from '@ethersproject/contracts'
-import { WNATIVE } from '@pancakeswap/sdk'
-import { ERC20_BYTES32_ABI } from 'config/abi/erc20'
-import ERC20_ABI from 'config/abi/erc20.json'
-import IPancakePairABI from 'config/abi/IPancakePair.json'
-import multiCallAbi from 'config/abi/Multicall.json'
-import WETH_ABI from 'config/abi/weth.json'
-import { getContract } from 'utils'
-
-import { IPancakePair } from 'config/abi/types/IPancakePair'
+import { WNATIVE, ChainId, pancakePairV2ABI } from '@pancakeswap/sdk'
+import { nonfungiblePositionManagerABI } from '@pancakeswap/v3-sdk'
+import { CAKE } from '@pancakeswap/tokens'
+import { ifoV1ABI } from 'config/abi/ifoV1'
+import { ifoV2ABI } from 'config/abi/ifoV2'
+import { ifoV3ABI } from 'config/abi/ifoV3'
+import { multicallABI } from 'config/abi/Multicall'
+import { WBETH } from 'config/constants/liquidStaking'
 import { VaultKey } from 'state/types'
-import { useActiveChainId } from './useActiveChainId'
+import { wbethEthABI } from 'config/abi/wbethETH'
+import { wbethBscABI } from 'config/abi/wbethBSC'
+import { zapABI } from 'config/abi/zap'
+import { erc20Bytes32ABI } from 'config/abi/erc20_bytes32'
 
+import { useActiveChainId } from 'hooks/useActiveChainId'
+import { wethABI } from 'config/abi/weth'
+import { erc721CollectionABI } from 'config/abi/erc721collection'
+import { infoStableSwapABI } from 'config/abi/infoStableSwap'
 /**
  * Helper hooks to get specific contracts (by ABI)
  */
 
-export const useIfoV1Contract = (address: string) => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getIfoV1Contract(address, signer), [address, signer])
+export const useIfoV1Contract = (address: Address) => {
+  return useContract(address, ifoV1ABI)
 }
 
-export const useIfoV2Contract = (address: string) => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getIfoV2Contract(address, signer), [address, signer])
+export const useIfoV2Contract = (address: Address) => {
+  return useContract(address, ifoV2ABI)
 }
 
-export const useIfoV3Contract = (address: string) => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getIfoV3Contract(address, signer), [address, signer])
+export const useIfoV3Contract = (address: Address) => {
+  return useContract(address, ifoV3ABI)
 }
 
-export const useERC20 = (address: string, withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
-  return useMemo(() => getBep20Contract(address, providerOrSigner), [address, providerOrSigner])
+export const useERC20 = (address: Address) => {
+  return useContract(address, erc20ABI)
 }
 
-/**
- * @see https://docs.openzeppelin.com/contracts/3.x/api/token/erc721
- */
-export const useERC721 = (address: string, withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
-  return useMemo(() => getErc721Contract(address, providerOrSigner), [address, providerOrSigner])
-}
+export const useCake = () => {
+  const { chainId } = useActiveChainId()
 
-export const useCake = (): { reader: Cake; signer: Cake } => {
-  const providerOrSigner = useProviderOrSigner(true, true)
-  return useMemo(
-    () => ({
-      reader: getCakeContract(null),
-      signer: getCakeContract(providerOrSigner),
-    }),
-    [providerOrSigner],
-  )
+  return useContract(CAKE[chainId].address ?? CAKE[ChainId.BSC].address, erc20ABI)
 }
 
 export const useBunnyFactory = () => {
-  const { data: signer } = useSigner()
+  const { data: signer } = useWalletClient()
   return useMemo(() => getBunnyFactoryContract(signer), [signer])
 }
 
-export const usePancakeBunnies = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getPancakeBunniesContract(signer), [signer])
-}
-
-export const useProfileContract = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getProfileContract(providerOrSigner), [providerOrSigner])
+export const useProfileContract = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getProfileContract(signer), [signer])
 }
 
 export const useLotteryV2Contract = () => {
-  const providerOrSigner = useProviderOrSigner(true, true)
-  return useMemo(() => getLotteryV2Contract(providerOrSigner), [providerOrSigner])
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getLotteryV2Contract(signer), [signer])
 }
 
-export const useMasterchef = (withSignerIfPossible = true) => {
+export const useMasterchef = () => {
   const { chainId } = useActiveChainId()
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
-  return useMemo(() => getMasterchefContract(providerOrSigner, chainId), [providerOrSigner, chainId])
-}
-
-export const useMasterchefV1 = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getMasterchefV1Contract(signer), [signer])
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getMasterChefContract(signer, chainId), [signer, chainId])
 }
 
 export const useSousChef = (id) => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getSouschefContract(id, signer), [id, signer])
+  const { data: signer } = useWalletClient()
+  const { chainId } = useActiveChainId()
+  const publicClient = usePublicClient({ chainId })
+  return useMemo(
+    () =>
+      getPoolContractBySousId({
+        sousId: id,
+        signer,
+        chainId,
+        publicClient,
+      }),
+    [id, signer, chainId, publicClient],
+  )
 }
 
 export const usePointCenterIfoContract = () => {
-  const { data: signer } = useSigner()
+  const { data: signer } = useWalletClient()
   return useMemo(() => getPointCenterIfoContract(signer), [signer])
 }
 
-export const useBunnySpecialContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getBunnySpecialContract(signer), [signer])
+export const useTradingCompetitionContractEaster = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getTradingCompetitionContractEaster(signer), [signer])
 }
 
-export const useClaimRefundContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getClaimRefundContract(signer), [signer])
+export const useTradingCompetitionContractFanToken = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getTradingCompetitionContractFanToken(signer), [signer])
 }
 
-export const useTradingCompetitionContractEaster = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getTradingCompetitionContractEaster(providerOrSigner), [providerOrSigner])
+export const useTradingCompetitionContractMobox = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getTradingCompetitionContractMobox(signer), [signer])
 }
 
-export const useTradingCompetitionContractFanToken = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getTradingCompetitionContractFanToken(providerOrSigner), [providerOrSigner])
+export const useTradingCompetitionContractMoD = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getTradingCompetitionContractMoD(signer), [signer])
 }
 
-export const useTradingCompetitionContractMobox = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getTradingCompetitionContractMobox(providerOrSigner), [providerOrSigner])
-}
-
-export const useTradingCompetitionContractMoD = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getTradingCompetitionContractMoD(providerOrSigner), [providerOrSigner])
-}
-
-export const useEasterNftContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getEasterNftContract(signer), [signer])
-}
-
-export const useVaultPoolContract = (vaultKey: VaultKey): CakeVaultV2 | CakeFlexibleSideVaultV2 => {
-  const { data: signer } = useSigner()
+export const useVaultPoolContract = <T extends VaultKey>(
+  vaultKey: T,
+):
+  | (T extends VaultKey.CakeVault
+      ? ReturnType<typeof getCakeVaultV2Contract>
+      : ReturnType<typeof getCakeFlexibleSideVaultV2Contract>)
+  | null => {
+  const { data: signer } = useWalletClient()
   return useMemo(() => {
     if (vaultKey === VaultKey.CakeVault) {
       return getCakeVaultV2Contract(signer)
@@ -206,188 +166,212 @@ export const useVaultPoolContract = (vaultKey: VaultKey): CakeVaultV2 | CakeFlex
       return getCakeFlexibleSideVaultV2Contract(signer)
     }
     return null
-  }, [signer, vaultKey])
+  }, [signer, vaultKey]) as any
 }
 
-export const useCakeVaultContract = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
-  return useMemo(() => getCakeVaultV2Contract(providerOrSigner), [providerOrSigner])
+export const useCakeVaultContract = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getCakeVaultV2Contract(signer), [signer])
 }
 
 export const useIfoCreditAddressContract = () => {
   return useMemo(() => getIfoCreditAddressContract(), [])
 }
 
-export const usePredictionsContract = (address: string, tokenSymbol: string) => {
-  const { data: signer } = useSigner()
+export const usePredictionsContract = (address: Address, tokenSymbol: string) => {
+  const { data: signer } = useWalletClient()
   return useMemo(() => {
     if (address === getPredictionsV1Address()) {
       return getPredictionsV1Contract(signer)
     }
-    const getPredContract = tokenSymbol === 'PLAX' ? getCakePredictionsContract : getPredictionsContract
+    const getPredContract = tokenSymbol === 'CAKE' ? getCakePredictionsContract : getPredictionsV2Contract
 
     return getPredContract(address, signer)
   }, [address, tokenSymbol, signer])
 }
 
-export const useChainlinkOracleContract = (address, withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getChainlinkOracleContract(address, providerOrSigner), [providerOrSigner, address])
-}
-
-export const useSpecialBunnyCakeVaultContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getBunnySpecialCakeVaultContract(signer), [signer])
-}
-
-export const useSpecialBunnyPredictionContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getBunnySpecialPredictionContract(signer), [signer])
-}
-
-export const useBunnySpecialLotteryContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getBunnySpecialLotteryContract(signer), [signer])
-}
-
-export const useBunnySpecialXmasContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getBunnySpecialXmasContract(signer), [signer])
-}
-
-export const useAnniversaryAchievementContract = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getAnniversaryAchievementContract(providerOrSigner), [providerOrSigner])
+export const useChainlinkOracleContract = (address) => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getChainlinkOracleContract(address, signer), [signer, address])
 }
 
 export const useNftSaleContract = () => {
-  const { data: signer } = useSigner()
+  const { data: signer } = useWalletClient()
   return useMemo(() => getNftSaleContract(signer), [signer])
 }
 
-export const usePancakeSquadContract = () => {
-  const { data: signer } = useSigner()
-  return useMemo(() => getPancakeSquadContract(signer), [signer])
-}
-
-export const useFarmAuctionContract = (withSignerIfPossible = true) => {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getFarmAuctionContract(providerOrSigner), [providerOrSigner])
+export const useFarmAuctionContract = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getFarmAuctionContract(signer), [signer])
 }
 
 export const useNftMarketContract = () => {
-  const { data: signer } = useSigner()
+  const { data: signer } = useWalletClient()
   return useMemo(() => getNftMarketContract(signer), [signer])
 }
 
-export const useErc721CollectionContract = (
-  collectionAddress: string,
-): { reader: Erc721collection; signer: Erc721collection } => {
-  const { data: signer } = useSigner()
-  return useMemo(
-    () => ({
-      reader: getErc721CollectionContract(null, collectionAddress),
-      signer: getErc721CollectionContract(signer, collectionAddress),
-    }),
-    [signer, collectionAddress],
-  )
+export const useErc721CollectionContract = (collectionAddress: Address) => {
+  return useContract(collectionAddress, erc721CollectionABI)
 }
 
 // Code below migrated from Exchange useContract.ts
 
 // returns null on errors
-export function useContract<T extends Contract = Contract>(
-  address: string | undefined,
-  ABI: any,
-  withSignerIfPossible = true,
-): T | null {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
-
-  const canReturnContract = useMemo(() => address && ABI && providerOrSigner, [address, ABI, providerOrSigner])
+export function useContract<TAbi extends Abi>(
+  addressOrAddressMap?: Address | { [chainId: number]: Address },
+  abi?: TAbi,
+) {
+  const { chainId } = useActiveChainId()
+  const { data: walletClient } = useWalletClient()
 
   return useMemo(() => {
-    if (!canReturnContract) return null
+    if (!addressOrAddressMap || !abi || !chainId) return null
+    let address: Address | undefined
+    if (typeof addressOrAddressMap === 'string') address = addressOrAddressMap
+    else address = addressOrAddressMap[chainId]
+    if (!address) return null
     try {
-      return getContract(address, ABI, providerOrSigner)
+      return getContract({
+        abi,
+        address,
+        chainId,
+        signer: walletClient,
+      })
     } catch (error) {
       console.error('Failed to get contract', error)
       return null
     }
-  }, [address, ABI, providerOrSigner, canReturnContract]) as T
+  }, [addressOrAddressMap, abi, chainId, walletClient])
 }
 
-export function useTokenContract(tokenAddress?: string, withSignerIfPossible?: boolean) {
-  return useContract<Erc20>(tokenAddress, ERC20_ABI, withSignerIfPossible)
+export function useTokenContract(tokenAddress?: Address) {
+  return useContract(tokenAddress, erc20ABI)
 }
 
-export function useWNativeContract(withSignerIfPossible?: boolean): Contract | null {
+export function useWNativeContract() {
   const { chainId } = useActiveChainId()
-  return useContract<Weth>(chainId ? WNATIVE[chainId]?.address : undefined, WETH_ABI, withSignerIfPossible)
+  return useContract(chainId ? WNATIVE[chainId]?.address : undefined, wethABI)
 }
 
-export function useBytes32TokenContract(tokenAddress?: string, withSignerIfPossible?: boolean): Contract | null {
-  return useContract<Erc20Bytes32>(tokenAddress, ERC20_BYTES32_ABI, withSignerIfPossible)
+export function useWBETHContract() {
+  const { chainId } = useActiveChainId()
+
+  const abi = useMemo(
+    () => ([ChainId.ETHEREUM, ChainId.GOERLI].includes(chainId) ? wbethEthABI : wbethBscABI),
+    [chainId],
+  )
+
+  return useContract(chainId ? WBETH[chainId] : undefined, abi)
 }
 
-export function usePairContract(pairAddress?: string, withSignerIfPossible?: boolean): IPancakePair | null {
-  return useContract(pairAddress, IPancakePairABI, withSignerIfPossible)
+export function useBytes32TokenContract(tokenAddress?: Address) {
+  return useContract(tokenAddress, erc20Bytes32ABI)
+}
+
+export function usePairContract(pairAddress?: Address) {
+  return useContract(pairAddress, pancakePairV2ABI)
 }
 
 export function useMulticallContract() {
   const { chainId } = useActiveChainId()
-  return useContract<Multicall>(getMulticallAddress(chainId), multiCallAbi, false)
+  return useContract(getMulticallAddress(chainId), multicallABI)
 }
 
-export const usePotterytVaultContract = (address) => {
-  const { data: signer } = useSigner()
+export const usePotterytVaultContract = (address: Address) => {
+  const { data: signer } = useWalletClient()
   return useMemo(() => getPotteryVaultContract(address, signer), [address, signer])
 }
 
 export const usePotterytDrawContract = () => {
-  const { data: signer } = useSigner()
+  const { data: signer } = useWalletClient()
   return useMemo(() => getPotteryDrawContract(signer), [signer])
 }
 
-export function useZapContract(withSignerIfPossible = true) {
+export function useZapContract() {
   const { chainId } = useActiveChainId()
-  return useContract<Zap>(getZapAddress(chainId), zapAbi, withSignerIfPossible)
+  return useContract(getZapAddress(chainId), zapABI)
 }
 
-export function useBCakeFarmBoosterContract(withSignerIfPossible = true) {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getBCakeFarmBoosterContract(providerOrSigner), [providerOrSigner])
+export function useBCakeFarmBoosterContract() {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getBCakeFarmBoosterContract(signer), [signer])
 }
 
-export function useBCakeFarmBoosterProxyFactoryContract(withSignerIfPossible = true) {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
-  return useMemo(() => getBCakeFarmBoosterProxyFactoryContract(providerOrSigner), [providerOrSigner])
+export function useBCakeFarmBoosterProxyFactoryContract() {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getBCakeFarmBoosterProxyFactoryContract(signer), [signer])
 }
 
-export function useBCakeProxyContract(proxyContractAddress: string, withSignerIfPossible = true) {
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible, true)
+export function useBCakeProxyContract(proxyContractAddress: Address) {
+  const { data: signer } = useWalletClient()
   return useMemo(
-    () => proxyContractAddress && getBCakeProxyContract(proxyContractAddress, providerOrSigner),
-    [providerOrSigner, proxyContractAddress],
+    () => proxyContractAddress && getBCakeProxyContract(proxyContractAddress, signer),
+    [signer, proxyContractAddress],
   )
 }
 
-export const useNonBscVault = (withSignerIfPossible = true) => {
+export const useNonBscVault = () => {
   const { chainId } = useActiveChainId()
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
-  return useMemo(() => getNonBscVaultContract(providerOrSigner, chainId), [providerOrSigner, chainId])
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getNonBscVaultContract(signer, chainId), [signer, chainId])
 }
 
-export const useCrossFarmingProxy = (proxyContractAddress: string, withSignerIfPossible = true) => {
+export const useSIDContract = (address, chainId) => {
+  return useMemo(() => getSidContract(address, chainId), [address, chainId])
+}
+
+export const useUNSContract = (address, chainId, provider) => {
+  return useMemo(() => getUnsContract(address, chainId, provider), [chainId, address, provider])
+}
+
+export const useCrossFarmingProxy = (proxyContractAddress: Address) => {
   const { chainId } = useActiveChainId()
-  const providerOrSigner = useProviderOrSigner(withSignerIfPossible)
+  const { data: signer } = useWalletClient()
   return useMemo(
-    () => proxyContractAddress && getCrossFarmingProxyContract(proxyContractAddress, providerOrSigner, chainId),
-    [proxyContractAddress, providerOrSigner, chainId],
+    () => proxyContractAddress && getCrossFarmingProxyContract(proxyContractAddress, signer, chainId),
+    [proxyContractAddress, signer, chainId],
   )
 }
 
 export const useStableSwapNativeHelperContract = () => {
   const { chainId } = useActiveChainId()
-  const { data: signer } = useSigner()
+  const { data: signer } = useWalletClient()
   return useMemo(() => getStableSwapNativeHelperContract(signer, chainId), [signer, chainId])
+}
+
+export function useV3NFTPositionManagerContract() {
+  return useContract(addresses.nftPositionManager, nonfungiblePositionManagerABI)
+}
+
+export function useMasterchefV3() {
+  const { chainId } = useActiveChainId()
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getMasterChefV3Contract(signer, chainId), [chainId, signer])
+}
+
+export function useV3MigratorContract() {
+  const { chainId } = useActiveChainId()
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getV3MigratorContract(signer, chainId), [chainId, signer])
+}
+
+export const useTradingRewardContract = ({ chainId: chainId_ }: { chainId?: ChainId } = {}) => {
+  const { chainId } = useActiveChainId()
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getTradingRewardContract(signer, chainId_ ?? chainId), [signer, chainId_, chainId])
+}
+
+export const useV3AirdropContract = () => {
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getV3AirdropContract(signer), [signer])
+}
+
+export const useInfoStableSwapContract = (infoAddress?: Address) => {
+  return useContract(infoAddress, infoStableSwapABI)
+}
+
+export const useAffiliateProgramContract = ({ chainId: chainId_ }: { chainId?: ChainId } = {}) => {
+  const { chainId } = useActiveChainId()
+  const { data: signer } = useWalletClient()
+  return useMemo(() => getAffiliateProgramContract(signer, chainId_ ?? chainId), [signer, chainId_, chainId])
 }

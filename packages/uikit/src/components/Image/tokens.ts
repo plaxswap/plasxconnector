@@ -3,22 +3,13 @@
  */
 const tokens = {
   cake: {
-    symbol: "PLAX",
+    symbol: "CAKE",
     address: {
-      137: "0x328801B0b580eAdd83eA841638865eA41Dc6fb25",
+      56: "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82",
       97: "0xFa60D973F7642B748046464e165A65B7323b0DEE",
     },
-    decimals: 8,
-    projectLink: "https://plaxswap.io/",
-  },
-  plasa: {
-    symbol: "PLASA",
-    address: {
-      137: "0x7972De0F17Ae5dC02385A863595CC74168F6D550",
-      97: "0xFa60D973F7642B748046464e165A65B7323b0DEE",
-    },
-    decimals: 8,
-    projectLink: "https://plaxswap.io/",
+    decimals: 18,
+    projectLink: "https://pancakeswap.finance/",
   },
   txl: {
     symbol: "TXL",
@@ -444,7 +435,7 @@ const tokens = {
     projectLink: "https://venus.io/",
   },
   wbnb: {
-    symbol: "wPOL",
+    symbol: "wMATIC",
     address: {
       137: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
       97: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
@@ -588,9 +579,9 @@ const tokens = {
     projectLink: "https://compound.finance/",
   },
   syrup: {
-    symbol: "PLAXBAR",
+    symbol: "SYRUP",
     address: {
-      137: "0x7cbbC91c05c64c5E5b12Da6F090F8f11480deA64",
+      56: "0x009cF7bC57584b7998236eff51b98A168DceA9B0",
       97: "0xfE1e507CeB712BDe086f3579d2c03248b2dB77f9",
     },
     decimals: 18,
@@ -617,11 +608,11 @@ const tokens = {
   busd: {
     symbol: "BUSD",
     address: {
-      137: "0x9C9e5fD8bbc25984B178FdCE6117Defa39d2db39",
+      56: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
       97: "",
     },
     decimals: 18,
-    projectLink: "https://www.binance/en/busd",
+    projectLink: "https://www.paxos.com/busd/",
   },
   eth: {
     symbol: "ETH",
@@ -689,10 +680,10 @@ const tokens = {
   usdc: {
     symbol: "USDC",
     address: {
-      137: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      56: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
       97: "0xaB1a4d4f1D656d2450692D237fdD6C7f9146e814",
     },
-    decimals: 6,
+    decimals: 18,
     projectLink: "https://www.centre.io/usdc",
   },
   dai: {
@@ -752,10 +743,10 @@ const tokens = {
   usdt: {
     symbol: "USDT",
     address: {
-      137: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      56: "0x55d398326f99059fF775485246999027B3197955",
       97: "0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5",
     },
-    decimals: 6,
+    decimals: 18,
     projectLink: "https://tether.to/",
   },
   btcb: {

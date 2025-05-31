@@ -46,13 +46,15 @@ const IndividualPancakeBunnyPageBase: React.FC<React.PropsWithChildren<Individua
   const { data: distributionData, isFetching: isFetchingDistribution } = useGetCollectionDistributionPB()
 
   useEffect(() => {
-    const fetchNftMetadata = async () => {
-      const metadata = await getNftsFromCollectionApi(pancakeBunniesAddress)
-      setNftMetadata(metadata)
-    }
-
     if (!nftMetadata) {
-      fetchNftMetadata()
+      getNftsFromCollectionApi(pancakeBunniesAddress).then(
+        (metadata) => {
+          setNftMetadata(metadata)
+        },
+        () => {
+          // do nothing.
+        },
+      )
     }
   }, [nftMetadata])
 
@@ -92,14 +94,14 @@ const IndividualPancakeBunnyPageBase: React.FC<React.PropsWithChildren<Individua
 
   const getBunnyIdCount = () => {
     if (distributionData && !isFetchingDistribution) {
-      return distributionData[bunnyId].tokenCount
+      return distributionData[bunnyId]?.tokenCount
     }
     return null
   }
 
   const getBunnyIdRarity = () => {
     if (distributionData && !isFetchingDistribution) {
-      return (distributionData[bunnyId].tokenCount / totalBunnyCount) * 100
+      return (distributionData[bunnyId]?.tokenCount / totalBunnyCount) * 100
     }
     return null
   }

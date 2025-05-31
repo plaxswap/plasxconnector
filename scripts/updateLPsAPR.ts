@@ -7,10 +7,9 @@ import _toLower from 'lodash/toLower'
 import { sub, getUnixTime } from 'date-fns'
 import { ChainId } from '@pancakeswap/sdk'
 import { SerializedFarmConfig } from '@pancakeswap/farms'
-import { StaticJsonRpcProvider } from '@ethersproject/providers'
-import { BlockResponse } from 'web/src/components/SubgraphHealthIndicator'
-import { BLOCKS_CLIENT_WITH_CHAIN } from 'web/src/config/constants/endpoints'
-import { stableSwapClient, infoClientWithChain } from 'web/src/utils/graphql'
+import { BlockResponse } from '../apps/web/src/components/SubgraphHealthIndicator'
+import { BLOCKS_CLIENT_WITH_CHAIN } from '../apps/web/src/config/constants/endpoints'
+import { stableSwapClient, infoClientWithChain } from '../apps/web/src/utils/graphql'
 
 interface SingleFarmResponse {
   id: string
@@ -96,15 +95,6 @@ const getAprsForFarmGroup = async (addresses: string[], blockWeekAgo: number, ch
   }
 }
 
-// Copy paste of Stable farm logic
-export const bscProvider = new StaticJsonRpcProvider(
-  {
-    url: 'https://rpc.ankr.com/polygon/8a211590835087845ff22ee4159e7dc636f0cce7cfb1ecc483fc0fb1cbb99599',
-    skipFetchSetup: true,
-  },
-  137,
-)
-
 interface SplitFarmResult {
   normalFarms: any[]
   stableFarms: any[]
@@ -172,7 +162,7 @@ function splitNormalAndStableFarmsReducer(result: SplitFarmResult, farm: any): S
 }
 // ====
 
-const FETCH_CHAIN_ID = [ChainId.BSC]
+const FETCH_CHAIN_ID = [ChainId.BSC, ChainId.ETHEREUM]
 const fetchAndUpdateLPsAPR = async () => {
   Promise.all(
     FETCH_CHAIN_ID.map(async (chainId) => {

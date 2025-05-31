@@ -1,5 +1,5 @@
-import { parseUnits } from '@ethersproject/units'
-import { Currency, CurrencyAmount, JSBI } from '@pancakeswap/swap-sdk-core'
+import { parseUnits } from 'viem'
+import { Currency, CurrencyAmount } from '@pancakeswap/swap-sdk-core'
 
 // try to parse a user entered amount for a given token
 function tryParseAmount<T extends Currency>(value?: string, currency?: T): CurrencyAmount<T> | undefined {
@@ -7,10 +7,10 @@ function tryParseAmount<T extends Currency>(value?: string, currency?: T): Curre
     return undefined
   }
   try {
-    const typedValueParsed = parseUnits(value, currency.decimals).toString()
+    const typedValueParsed = parseUnits(value as `${number}`, currency.decimals).toString()
 
     if (typedValueParsed !== '0') {
-      return CurrencyAmount.fromRawAmount(currency, JSBI.BigInt(typedValueParsed))
+      return CurrencyAmount.fromRawAmount(currency, BigInt(typedValueParsed))
     }
   } catch (error) {
     // should fail if the user specifies too many decimal places of precision (or maybe exceed max uint?)

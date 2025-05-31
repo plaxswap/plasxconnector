@@ -1,20 +1,19 @@
 import { Currency } from '@pancakeswap/sdk'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { useMemo } from 'react'
 import { Field } from 'state/swap/actions'
 
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 import { parseMMParameter } from '../utils/exchange'
-import { useIsMMQuotingPair } from './useIsMMQuotingPair'
 
 export const useMMParam = (
+  isMMQuotingPair: boolean,
   independentField: Field,
-  typedValue: string,
+  typedValue: `${number}`,
   inputCurrency: Currency | undefined,
   outputCurrency: Currency | undefined,
   isForRFQ?: boolean,
 ) => {
-  const isMMQuotingPair = useIsMMQuotingPair(inputCurrency, outputCurrency)
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   return useMemo(
     () =>
       isMMQuotingPair

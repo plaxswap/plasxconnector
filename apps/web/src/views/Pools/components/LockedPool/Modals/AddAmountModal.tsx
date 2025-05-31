@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { differenceInSeconds } from 'date-fns'
 import { convertTimeToSeconds } from 'utils/timeHelper'
 import { Modal, Box, MessageText, Message, Checkbox, Flex, Text } from '@pancakeswap/uikit'
@@ -10,7 +10,7 @@ import { VaultKey } from 'state/types'
 import useTheme from 'hooks/useTheme'
 import { useBUSDCakeAmount } from 'hooks/useBUSDPrice'
 import { getBalanceNumber, getDecimalAmount, getBalanceAmount } from '@pancakeswap/utils/formatBalance'
-import { ONE_WEEK_DEFAULT } from 'config/constants/pools'
+import { ONE_WEEK_DEFAULT } from '@pancakeswap/pools'
 import { BIG_ZERO } from '@pancakeswap/utils/bigNumber'
 import { useCheckVaultApprovalStatus } from '../../../hooks/useApprove'
 
@@ -30,7 +30,7 @@ const RenewDuration = ({ setCheckedState, checkedState }) => {
         <Message variant="warning" mb="16px">
           <MessageText maxWidth="320px">
             {t(
-              'Adding more PLAX will renew your lock, setting it to remaining duration. Due to shorter lock period, benefits decrease. To keep similar benefits, extend your lock.',
+              'Adding more CAKE will renew your lock, setting it to remaining duration. Due to shorter lock period, benefits decrease. To keep similar benefits, extend your lock.',
             )}
           </MessageText>
         </Message>
@@ -55,15 +55,25 @@ const AddAmountModal: React.FC<React.PropsWithChildren<AddAmountModalProps>> = (
   lockStartTime,
   lockEndTime,
   stakingTokenBalance,
+  customLockAmount,
 }) => {
   const { theme } = useTheme()
   const ceiling = useIfoCeiling()
   const [lockedAmount, setLockedAmount] = useState('')
   const [checkedState, setCheckedState] = useState(false)
   const { t } = useTranslation()
-  const lockedAmountAsBigNumber = !Number.isNaN(new BigNumber(lockedAmount).toNumber())
-    ? new BigNumber(lockedAmount)
-    : BIG_ZERO
+
+  useEffect(() => {
+    if (customLockAmount) {
+      setLockedAmount(customLockAmount)
+    }
+  }, [customLockAmount])
+
+  const lockedAmountAsBigNumber = useMemo(
+    () => (!Number.isNaN(new BigNumber(lockedAmount).toNumber()) ? new BigNumber(lockedAmount) : BIG_ZERO),
+    [lockedAmount],
+  )
+
   const totalLockedAmount: number = getBalanceNumber(
     currentLockedAmount.plus(getDecimalAmount(lockedAmountAsBigNumber)),
   )
@@ -123,7 +133,7 @@ const AddAmountModal: React.FC<React.PropsWithChildren<AddAmountModalProps>> = (
 
   return (
     <RoiCalculatorModalProvider lockedAmount={lockedAmount}>
-      <Modal title={t('Add PLAX')} onDismiss={onDismiss} headerBackground={theme.colors.gradientCardHeader}>
+      <Modal title={t('Add CAKE')} onDismiss={onDismiss} headerBackground={theme.colors.gradientCardHeader}>
         <Box mb="16px">
           <BalanceField
             stakingAddress={stakingToken.address}

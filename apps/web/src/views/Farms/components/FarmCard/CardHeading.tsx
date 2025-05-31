@@ -1,14 +1,14 @@
 import { Token } from '@pancakeswap/sdk'
-import { Box, Farm as FarmUI, Flex, Heading, Skeleton, Tag } from '@pancakeswap/uikit'
+import { AutoRow, Farm as FarmUI, Flex, Heading, Skeleton, Tag, useTooltip } from '@pancakeswap/uikit'
+import { FeeAmount } from '@pancakeswap/v3-sdk'
 import { TokenPairImage } from 'components/TokenImage'
-// import { v3PromotionFarms, V3SwapPromotionIcon } from 'components/V3SwapPromotionIcon'
-import { useActiveChainId } from 'hooks/useActiveChainId'
 import styled from 'styled-components'
+
 import BoostedTag from '../YieldBooster/components/BoostedTag'
 
-const { FarmAuctionTag, CoreTag, StableFarmTag } = FarmUI.Tags
+const { FarmAuctionTag, StableFarmTag, V2Tag, V3FeeTag } = FarmUI.Tags
 
-export interface ExpandableSectionProps {
+type ExpandableSectionProps = {
   lpLabel?: string
   multiplier?: string
   isCommunityFarm?: boolean
@@ -16,7 +16,11 @@ export interface ExpandableSectionProps {
   quoteToken: Token
   boosted?: boolean
   isStable?: boolean
+  version: 3 | 2
+  feeAmount?: FeeAmount
   pid?: number
+  farmCakePerSecond?: string
+  totalMultipliers?: string
 }
 
 const Wrapper = styled(Flex)`
@@ -37,10 +41,21 @@ const CardHeading: React.FC<React.PropsWithChildren<ExpandableSectionProps>> = (
   quoteToken,
   boosted,
   isStable,
-  pid,
+  version,
+  feeAmount,
+  farmCakePerSecond,
+  totalMultipliers,
 }) => {
   const isReady = multiplier !== undefined
-  const { chainId } = useActiveChainId()
+
+  const multiplierTooltipContent = FarmUI.FarmMultiplierInfo({
+    farmCakePerSecond: farmCakePerSecond ?? '-',
+    totalMultipliers: totalMultipliers ?? '-',
+  })
+
+  const { targetRef, tooltip, tooltipVisible } = useTooltip(multiplierTooltipContent, {
+    placement: 'bottom',
+  })
 
   return (
     <Wrapper justifyContent="space-between" alignItems="center" mb="12px">
@@ -49,24 +64,26 @@ const CardHeading: React.FC<React.PropsWithChildren<ExpandableSectionProps>> = (
       ) : (
         <Skeleton mr="8px" width={63} height={63} variant="circle" />
       )}
-      <Flex flexDirection="column" alignItems="flex-end">
+      <Flex flexDirection="column" alignItems="flex-end" width="100%">
         {isReady ? (
-          <Heading mb="4px">
-            {/* {v3PromotionFarms?.[chainId]?.[pid] && <V3SwapPromotionIcon />} {lpLabel.split(' ')[0]} */}
-          </Heading>
+          <Heading mb="4px">{lpLabel?.split(' ')?.[0] ?? ''}</Heading>
         ) : (
           <Skeleton mb="4px" width={60} height={18} />
         )}
-        <Flex justifyContent="center">
-          {isReady && isStable && <StableFarmTag mr="4px" />}
-          {isReady && boosted && <BoostedTag mr="4px" />}
-          {isReady ? <Box>{isCommunityFarm ? <FarmAuctionTag /> : <CoreTag />}</Box> : null}
+        <AutoRow gap="4px" justifyContent="flex-end">
+          {isReady && isStable ? <StableFarmTag /> : version === 2 ? <V2Tag /> : null}
+          {isReady && version === 3 && <V3FeeTag feeAmount={feeAmount} />}
+          {isReady && boosted && <BoostedTag />}
+          {isReady && isCommunityFarm && <FarmAuctionTag mr="-4px" />}
           {isReady ? (
-            <MultiplierTag variant="secondary">{multiplier}</MultiplierTag>
+            <Flex ref={targetRef}>
+              <MultiplierTag variant="secondary">{multiplier}</MultiplierTag>
+              {tooltipVisible && tooltip}
+            </Flex>
           ) : (
             <Skeleton ml="4px" width={42} height={28} />
           )}
-        </Flex>
+        </AutoRow>
       </Flex>
     </Wrapper>
   )

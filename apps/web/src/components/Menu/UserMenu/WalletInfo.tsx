@@ -8,6 +8,7 @@ import {
   Skeleton,
   Text,
   CopyAddress,
+  FlexGap,
 } from '@pancakeswap/uikit'
 import { ChainId, WNATIVE } from '@pancakeswap/sdk'
 import { FetchStatus } from 'config/constants/types'
@@ -15,12 +16,13 @@ import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { useTranslation } from '@pancakeswap/localization'
 import useAuth from 'hooks/useAuth'
 import useNativeCurrency from 'hooks/useNativeCurrency'
-import useTokenBalance, { useGetCakeBalance } from 'hooks/useTokenBalance'
+import useTokenBalance, { useBSCCakeBalance } from 'hooks/useTokenBalance'
 import { ChainLogo } from 'components/Logo/ChainLogo'
 
 import { getBlockExploreLink, getBlockExploreName } from 'utils'
-import { formatBigNumber, getFullDisplayBalance } from '@pancakeswap/utils/formatBalance'
+import { getFullDisplayBalance, formatBigInt } from '@pancakeswap/utils/formatBalance'
 import { useBalance } from 'wagmi'
+import { useDomainNameForAddress } from 'hooks/useDomain'
 import CakeBenefitsCard from './CakeBenefitsCard'
 
 const COLORS = {
@@ -37,6 +39,7 @@ interface WalletInfoProps {
 const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss }) => {
   const { t } = useTranslation()
   const { account, chainId, chain } = useActiveWeb3React()
+  const { domainName } = useDomainNameForAddress(account)
   const isBSC = chainId === ChainId.BSC
   const bnbBalance = useBalance({ address: account, chainId: ChainId.BSC })
   const nativeBalance = useBalance({ address: account, enabled: !isBSC })
@@ -45,7 +48,7 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
   const wBNBToken = WNATIVE[ChainId.BSC]
   const { balance: wNativeBalance, fetchStatus: wNativeFetchStatus } = useTokenBalance(wNativeToken?.address)
   const { balance: wBNBBalance, fetchStatus: wBNBFetchStatus } = useTokenBalance(wBNBToken?.address, true)
-  const { balance: cakeBalance, fetchStatus: cakeFetchStatus } = useGetCakeBalance()
+  const { balance: cakeBalance, fetchStatus: cakeFetchStatus } = useBSCCakeBalance()
   const { logout } = useAuth()
 
   const handleLogout = () => {
@@ -58,7 +61,10 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
       <Text color="secondary" fontSize="12px" textTransform="uppercase" fontWeight="bold" mb="8px">
         {t('Your Address')}
       </Text>
-      <CopyAddress tooltipMessage={t('Copied')} account={account} mb="24px" />
+      <FlexGap flexDirection="column" mb="24px" gap="8px">
+        <CopyAddress tooltipMessage={t('Copied')} account={account} />
+        {domainName ? <Text color="textSubtle">{domainName}</Text> : null}
+      </FlexGap>
       {hasLowNativeBalance && (
         <Message variant="warning" mb="24px">
           <Box>
@@ -95,7 +101,7 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
             {!nativeBalance.isFetched ? (
               <Skeleton height="22px" width="60px" />
             ) : (
-              <Text>{formatBigNumber(nativeBalance.data.value, 6)}</Text>
+              <Text>{formatBigInt(nativeBalance.data.value, 6)}</Text>
             )}
           </Flex>
           {wNativeBalance.gt(0) && (
@@ -117,7 +123,7 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
           <Flex bg={COLORS.BNB} borderRadius="16px" pl="4px" pr="8px" py="2px">
             <ChainLogo chainId={ChainId.BSC} />
             <Text color="white" ml="4px">
-              Polygon Chain
+              Polygon Matic
             </Text>
           </Flex>
           <LinkExternal isBscScan href={getBlockExploreLink(account, 'address', ChainId.BSC)}>
@@ -125,16 +131,16 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
           </LinkExternal>
         </Flex>
         <Flex alignItems="center" justifyContent="space-between">
-          <Text color="textSubtle">POL {t('Balance')}</Text>
+          <Text color="textSubtle">MATIC {t('Balance')}</Text>
           {!bnbBalance.isFetched ? (
             <Skeleton height="22px" width="60px" />
           ) : (
-            <Text>{formatBigNumber(bnbBalance.data.value, 6)}</Text>
+            <Text>{formatBigInt(bnbBalance.data.value ?? 0n, 6)}</Text>
           )}
         </Flex>
         {wBNBBalance.gt(0) && (
           <Flex alignItems="center" justifyContent="space-between">
-            <Text color="textSubtle">WPOL {t('Balance')}</Text>
+            <Text color="textSubtle">WBNB {t('Balance')}</Text>
             {wBNBFetchStatus !== FetchStatus.Fetched ? (
               <Skeleton height="22px" width="60px" />
             ) : (
@@ -143,11 +149,11 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
           </Flex>
         )}
         <Flex alignItems="center" justifyContent="space-between">
-          <Text color="textSubtle">{t('PLAX Balance')}</Text>
+          <Text color="textSubtle">{t('PLASA Balance')}</Text>
           {cakeFetchStatus !== FetchStatus.Fetched ? (
             <Skeleton height="22px" width="60px" />
           ) : (
-            <Text>{formatBigNumber(cakeBalance, 3)}</Text>
+            <Text>{formatBigInt(cakeBalance, 3)}</Text>
           )}
         </Flex>
       </Box>

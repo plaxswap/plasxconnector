@@ -7,12 +7,13 @@ import { ArrowBackIcon, ArrowForwardIcon, Box, Flex, LinkExternal, Radio, Skelet
 import { ITEMS_PER_INFO_TABLE_PAGE } from 'config/constants/info'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { useGetChainName } from 'state/info/hooks'
+import { useChainNameByQuery } from 'state/info/hooks'
 import { Transaction, TransactionType } from 'state/info/types'
 import styled from 'styled-components'
 import { getBlockExploreLink } from 'utils'
 
 import { formatAmount } from 'utils/formatInfoNumbers'
+import { useDomainNameForAddress } from 'hooks/useDomain'
 import { Arrow, Break, ClickableColumnHeader, PageButtons, TableWrapper } from './shared'
 
 const Wrapper = styled.div`
@@ -101,7 +102,8 @@ const DataRow: React.FC<React.PropsWithChildren<{ transaction: Transaction }>> =
   const abs1 = Math.abs(transaction.amountToken1)
   const outputTokenSymbol = transaction.amountToken0 < 0 ? transaction.token0Symbol : transaction.token1Symbol
   const inputTokenSymbol = transaction.amountToken1 < 0 ? transaction.token0Symbol : transaction.token1Symbol
-  const chainName = useGetChainName()
+  const chainName = useChainNameByQuery()
+  const { domainName } = useDomainNameForAddress(transaction.sender)
   return (
     <ResponsiveGrid>
       <LinkExternal
@@ -127,7 +129,7 @@ const DataRow: React.FC<React.PropsWithChildren<{ transaction: Transaction }>> =
         isBscScan
         href={getBlockExploreLink(transaction.sender, 'address', chainName === 'ETH' && ChainId.ETHEREUM)}
       >
-        {truncateHash(transaction.sender)}
+        {domainName || truncateHash(transaction.sender)}
       </LinkExternal>
       <Text>{formatDistanceToNowStrict(parseInt(transaction.timestamp, 10) * 1000)}</Text>
     </ResponsiveGrid>

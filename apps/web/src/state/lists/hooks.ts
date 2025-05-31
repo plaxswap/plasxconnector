@@ -53,7 +53,7 @@ const activeListUrlsAtom = atom((get) => {
 })
 
 const combineTokenMapsWithDefault = (lists: ListsState['byUrl'], urls: string[]) => {
-  const defaultTokenMap = listToTokenMap(DEFAULT_TOKEN_LIST)
+  const defaultTokenMap = listToTokenMap(DEFAULT_TOKEN_LIST as TokenList)
 
   if (!urls) return defaultTokenMap
 
@@ -106,7 +106,7 @@ export const tokenListFromOfficialsUrlsAtom = atom((get) => {
 
   const mergedTokenLists: TokenInfo[] = OFFICIAL_LISTS.reduce((acc, url) => {
     if (lists?.[url]?.current?.tokens) {
-      acc.push(...lists?.[url]?.current.tokens)
+      acc.push(...(lists?.[url]?.current.tokens || []))
     }
     return acc
   }, [])
@@ -135,7 +135,7 @@ export const combinedTokenMapFromUnsupportedUrlsAtom = atom((get) => {
 export const combinedTokenMapFromWarningUrlsAtom = atom((get) => {
   const lists = get(selectorByUrlsAtom)
   // get hard coded unsupported tokens
-  const localUnsupportedListMap = listToTokenMap(WARNING_TOKEN_LIST)
+  const localUnsupportedListMap = listToTokenMap(WARNING_TOKEN_LIST as TokenList)
   // get any loaded unsupported tokens
   const loadedUnsupportedListMap = combineTokenMaps(lists, WARNING_LIST_URLS)
 

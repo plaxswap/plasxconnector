@@ -1,6 +1,7 @@
 import React from "react";
-import { Image, Box } from "@pancakeswap/uikit";
 import { SpinnerProps } from "./types";
+import { Box } from "../Box";
+import { Image } from "../Image";
 
 const Spinner: React.FC<React.PropsWithChildren<SpinnerProps>> = ({ size = 128 }) => {
   return (
@@ -8,7 +9,7 @@ const Spinner: React.FC<React.PropsWithChildren<SpinnerProps>> = ({ size = 128 }
       <Image
         width={size}
         height={size * 1.197}
-        src="https://plaxswap.github.io/blockchain/pancake-3d-spinner-v2.gif"
+        src="https://assets.pancakeswap.finance/web/pancake-3d-spinner-v2.gif"
         alt="pancake-3d-spinner"
       />
     </Box>

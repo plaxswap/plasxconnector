@@ -1,7 +1,7 @@
 {
   "name": "@pancakeswap/wagmi",
-  "version": "0.1.0",
-  "license": "WAGMIT",
+  "version": "1.0.0",
+  "license": "MIT",
   "description": "wagmi adaptor for pancakeswap",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -14,30 +14,28 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepublishOnly": "yarn run build",
+    "prepublishOnly": "pnpm run build",
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
   },
   "peerDependencies": {
     "@blocto/sdk": "^0.3.1",
-    "@ethersproject/abi": "^5.0.0",
-    "@ethersproject/address": "^5.0.0",
-    "@ethersproject/bignumber": "^5.0.0",
-    "@ethersproject/bytes": "^5.0.0",
-    "@ethersproject/constants": "^5.0.0",
-    "@ethersproject/contracts": "^5.0.0",
-    "@ethersproject/providers": "^5.0.0",
-    "@ethersproject/strings": "^5.0.0",
-    "@ethersproject/units": "^5.0.0",
-    "@wagmi/core": "^0.8.14",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "swr": "^2.0.3",
-    "wagmi": "^0.10.10"
+    "@wagmi/core": "^1.2.0",
+    "react-dom": "^18.0.0",
+    "react": "^18.0.0",
+    "viem": "^1.0.7",
+    "wagmi": "^1.2.0"
   },
   "devDependencies": {
     "@blocto/sdk": "^0.3.1",
-    "tsconfig": "*",
-    "tsup": "^6.6.3"
+    "@pancakeswap/tsconfig": "workspace:*",
+    "@types/react": "^18.0.17",
+    "@wagmi/connectors": "^1.0.3",
+    "@wagmi/core": "^1.2.0",
+    "react-dom": "^18.0.0",
+    "react": "^18.0.0",
+    "tsup": "^6.7.0",
+    "viem": "^1.0.7",
+    "wagmi": "^1.2.0"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -69,9 +67,6 @@
   },
   "peerDependenciesMeta": {
     "@blocto/sdk": {
-      "optional": true
-    },
-    "swr": {
       "optional": true
     }
   }

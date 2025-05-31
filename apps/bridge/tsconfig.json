@@ -1,11 +1,11 @@
 {
-  "extends": "tsconfig/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "extends": "@pancakeswap/tsconfig/nextjs.json",
+  "include": ["next-env.d.ts"],
   "compilerOptions": {
     "target": "ES2015",
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
-      "@pancakeswap/wagmi": ["../../packages/wagmi/src/index.ts"]
+      "*": ["./*"]
     }
   },
   "exclude": ["node_modules"]

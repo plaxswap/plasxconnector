@@ -21,7 +21,7 @@ import { useEffect } from 'react'
 import styled from 'styled-components'
 
 import { useTranslation } from '@pancakeswap/localization'
-import { useAccount } from 'wagmi'
+import { Address, useAccount } from 'wagmi'
 import { ToastDescriptionWithTx } from 'components/Toast'
 import useBUSDPrice from 'hooks/useBUSDPrice'
 import { useCallWithGasPrice } from 'hooks/useCallWithGasPrice'
@@ -39,7 +39,7 @@ interface CollectRoundWinningsModalProps extends InjectedModalProps {
   dispatch: (action: AnyAction | AsyncThunkAction<any, { account: string }, any>) => void
   history: Bet[]
   isLoadingHistory: boolean
-  predictionsAddress: string
+  predictionsAddress: Address
   token: Token
   isV1Claim?: boolean
 }
@@ -115,7 +115,7 @@ const CollectRoundWinningsModal: React.FC<React.PropsWithChildren<CollectRoundWi
 
   const handleClick = async () => {
     const receipt = await fetchWithCatchTxError(() => {
-      return callWithGasPrice(predictionsContract, 'claim', [epochs])
+      return callWithGasPrice(predictionsContract as any, 'claim', [epochs])
     })
     if (receipt?.status) {
       if (!isV1Claim) {
@@ -142,7 +142,7 @@ const CollectRoundWinningsModal: React.FC<React.PropsWithChildren<CollectRoundWi
   }
 
   return (
-    <Modal $minWidth="288px" position="relative" mt="124px">
+    <Modal minWidth="288px" position="relative" mt="124px">
       <BunnyDecoration>
         <img src="/images/decorations/prize-bunny.png" alt="bunny decoration" height="124px" width="168px" />
       </BunnyDecoration>

@@ -20,7 +20,7 @@ import { useAccount } from 'wagmi'
 import { useTranslation } from '@pancakeswap/localization'
 import { useAppDispatch } from 'state'
 
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { useVaultPoolByKey } from 'state/pools/hooks'
 import { useVaultApy } from 'hooks/useVaultApy'
 import { useCheckVaultApprovalStatus, useVaultApprove } from 'views/Pools/hooks/useApprove'
@@ -37,7 +37,9 @@ import { ToastDescriptionWithTx } from 'components/Toast'
 import { vaultPoolConfig } from 'config/constants/pools'
 import { getFullDecimalMultiplier } from '@pancakeswap/utils/getFullDecimalMultiplier'
 import { Token } from '@pancakeswap/sdk'
+import { useActiveChainId } from 'hooks/useActiveChainId'
 import { useCallWithGasPrice } from 'hooks/useCallWithGasPrice'
+
 import { VaultRoiCalculatorModal } from '../Vault/VaultRoiCalculatorModal'
 import ConvertToLock from '../LockedPool/Common/ConvertToLock'
 import FeeSummary from './FeeSummary'
@@ -75,10 +77,11 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
   onDismiss,
 }) => {
   const dispatch = useAppDispatch()
+  const { chainId } = useActiveChainId()
   const { stakingToken, earningTokenPrice, vaultKey } = pool
   const { address: account } = useAccount()
   const { fetchWithCatchTxError, loading: pendingTx } = useCatchTxError()
-  const vaultPoolContract = useVaultPoolContract(pool.vaultKey)
+  const vaultPoolContract = useVaultPoolContract(pool.vaultKey) as any
   const { callWithGasPrice } = useCallWithGasPrice()
   const {
     pricePerFullShare,
@@ -96,7 +99,7 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
   const [percent, setPercent] = useState(0)
   const [showRoiCalculator, setShowRoiCalculator] = useState(false)
   const { hasUnstakingFee } = useWithdrawalFeeTimer(parseInt(lastDepositedTime, 10), userShares)
-  const cakePriceBusd = usePriceCakeBusd()
+  const cakePriceBusd = usePriceCakeUSD()
   const usdValueStaked = new BigNumber(stakeAmount).times(cakePriceBusd)
   const formattedUsdValueStaked = cakePriceBusd.gt(0) && stakeAmount ? formatNumber(usdValueStaked.toNumber()) : ''
   const { flexibleApy } = useVaultApy()
@@ -112,7 +115,7 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
   }, [allowance, stakeAmount, isRemovingStake])
 
   const callOptions = {
-    gasLimit: vaultPoolConfig[pool.vaultKey].gasLimit,
+    gas: vaultPoolConfig[pool.vaultKey].gasLimit,
   }
 
   const interestBreakdown = getInterestBreakdown({
@@ -171,7 +174,7 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
 
       if (pool.vaultKey === VaultKey.CakeFlexibleSideVault) {
         const { sharesAsBigNumber } = convertCakeToShares(convertedStakeAmount, pricePerFullShare)
-        return callWithGasPrice(vaultPoolContract, 'withdraw', [sharesAsBigNumber.toString()], callOptions)
+        return callWithGasPrice(vaultPoolContract, 'withdraw', [parseInt(sharesAsBigNumber.toString())], callOptions)
       }
 
       return callWithGasPrice(vaultPoolContract, 'withdrawByAmount', [convertedStakeAmount.toString()], callOptions)
@@ -185,7 +188,7 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
         </ToastDescriptionWithTx>,
       )
       onDismiss?.()
-      dispatch(fetchCakeVaultUserData({ account }))
+      dispatch(fetchCakeVaultUserData({ account, chainId }))
     }
   }
 
@@ -206,7 +209,7 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
         </ToastDescriptionWithTx>,
       )
       onDismiss?.()
-      dispatch(fetchCakeVaultUserData({ account }))
+      dispatch(fetchCakeVaultUserData({ account, chainId }))
     }
   }
 
@@ -339,7 +342,7 @@ const VaultStakeModal: React.FC<React.PropsWithChildren<VaultStakeModalProps>> =
       )}
       {!isRemovingStake && (
         <Button mt="8px" as="a" external href={getTokenLink} variant="secondary">
-          {t('Get %symbol%', { symbol: stakingToken.symbol })}
+          {t('Add %symbol%', { symbol: stakingToken.symbol })}
         </Button>
       )}
     </Modal>

@@ -19,7 +19,7 @@ const viewTitle = (t: ContextApi['t'], currentView: Views) => {
     case Views.REMOVE:
       return t('Remove Profile Pic')
     case Views.APPROVE:
-      return t('Enable PLAX')
+      return t('Enable CAKE')
     default:
       return ''
   }
@@ -33,7 +33,13 @@ const EditProfileModal: React.FC<React.PropsWithChildren<EditProfileModalProps>>
   const handleBack = isStartView ? null : () => goPrevious()
 
   return (
-    <Modal title={viewTitle(t, currentView)} onBack={handleBack} onDismiss={onDismiss} hideCloseButton={!isStartView}>
+    <Modal
+      title={viewTitle(t, currentView)}
+      onBack={handleBack}
+      onDismiss={onDismiss}
+      hideCloseButton={!isStartView}
+      bodyAlignItems="center"
+    >
       <div style={{ maxWidth: '400px' }}>
         {currentView === Views.START && (
           <StartView goToApprove={goToApprove} goToChange={goToChange} goToRemove={goToRemove} onDismiss={onDismiss} />

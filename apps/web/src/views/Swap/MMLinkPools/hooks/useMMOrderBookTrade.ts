@@ -2,7 +2,6 @@ import { useTranslation } from '@pancakeswap/localization'
 import { Currency, Pair, TradeType } from '@pancakeswap/sdk'
 import tryParseAmount from '@pancakeswap/utils/tryParseAmount'
 import { useQuery } from '@tanstack/react-query'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { MutableRefObject, useMemo, useRef } from 'react'
 import { Field } from 'state/swap/actions'
 import { useCurrencyBalances } from 'state/wallet/hooks'
@@ -10,6 +9,7 @@ import { useMMLinkedPoolByDefault } from 'state/user/mmLinkedPool'
 
 import { isAddress } from 'utils'
 
+import { useAccount } from 'wagmi'
 import { getMMOrderBook } from '../apis'
 import { MMOrderBookTrade, OrderBookRequest, OrderBookResponse, TradeWithMM } from '../types'
 import { parseMMTrade } from '../utils/exchange'
@@ -65,14 +65,12 @@ export const useOrderBookQuote = (
   rfqRequest: OrderBookRequest | null,
   rfqUserInputPath: MutableRefObject<string>,
   isRFQLive: MutableRefObject<boolean>,
-  isMMQuotingPair: boolean,
 ): { data: OrderBookResponse; isLoading: boolean } => {
   const [isMMLinkedPoolByDefault] = useMMLinkedPoolByDefault()
   const inputPath = `${request?.networkId}/${request?.makerSideToken}/${request?.takerSideToken}/${request?.makerSideTokenAmount}/${request?.takerSideTokenAmount}`
   const rfqInputPath = `${rfqRequest?.networkId}/${rfqRequest?.makerSideToken}/${rfqRequest?.takerSideToken}/${rfqRequest?.makerSideTokenAmount}/${rfqRequest?.takerSideTokenAmount}`
   const enabled = Boolean(
     isMMLinkedPoolByDefault &&
-      isMMQuotingPair &&
       request &&
       request.trader &&
       (request.makerSideTokenAmount || request.takerSideTokenAmount) &&
@@ -80,11 +78,11 @@ export const useOrderBookQuote = (
       request.takerSideTokenAmount !== '0' &&
       checkOrderBookShouldRefetch(rfqInputPath, rfqUserInputPath, isRFQLive),
   )
-  const { data, isLoading } = useQuery([`orderBook/${inputPath}`], () => getMMOrderBook(request), {
+  const { data, isLoading } = useQuery([`orderBook/${inputPath}`], () => getMMOrderBook(request as OrderBookRequest), {
     refetchInterval: 5000,
     enabled,
   })
-  return { data, isLoading: enabled && isLoading }
+  return { data: isMMLinkedPoolByDefault ? data : undefined, isLoading: enabled && isLoading }
 }
 
 export const useMMTrade = (
@@ -93,40 +91,44 @@ export const useMMTrade = (
   inputCurrency: Currency | undefined,
   outputCurrency: Currency | undefined,
 ): MMOrderBookTrade | null => {
-  const { account } = useActiveWeb3React()
+  const { t } = useTranslation()
+  const { address: account } = useAccount()
   const rfqUserInputPath = useRef<string>('')
   const isRFQLive = useRef<boolean>(false)
   const isMMQuotingPair = useIsMMQuotingPair(inputCurrency, outputCurrency)
-  const mmParam = useMMParam(independentField, typedValue, inputCurrency, outputCurrency)
-  const mmRFQParam = useMMParam(independentField, typedValue, inputCurrency, outputCurrency, true)
-
-  const { data: mmQuote, isLoading } = useOrderBookQuote(
-    mmParam,
-    mmRFQParam,
-    rfqUserInputPath,
-    isRFQLive,
+  const mmParam = useMMParam(
     isMMQuotingPair,
+    independentField,
+    typedValue as `${number}`,
+    inputCurrency,
+    outputCurrency,
   )
-  const { t } = useTranslation()
+  const mmRFQParam = useMMParam(
+    isMMQuotingPair,
+    independentField,
+    typedValue as `${number}`,
+    inputCurrency,
+    outputCurrency,
+    true,
+  )
+
+  const { data: mmQuote, isLoading } = useOrderBookQuote(mmParam, mmRFQParam, rfqUserInputPath, isRFQLive)
   const to: string | null = account ?? null
 
   const relevantTokenBalances = useCurrencyBalances(
     account ?? undefined,
     useMemo(() => [inputCurrency ?? undefined, outputCurrency ?? undefined], [inputCurrency, outputCurrency]),
   )
-  const isExactIn: boolean = independentField === Field.INPUT
+  const isExactIn = independentField === Field.INPUT
   const independentCurrency = isExactIn ? inputCurrency : outputCurrency
   const parsedAmount = useMemo(() => {
     return tryParseAmount(typedValue, independentCurrency ?? undefined)
   }, [typedValue, independentCurrency])
   const bestTradeWithMM = useMemo(() => {
-    let result
-    if (!inputCurrency || !outputCurrency || !mmQuote || !mmQuote?.message?.takerSideTokenAmount) result = null
-    else {
-      const { takerSideTokenAmount, makerSideTokenAmount } = mmQuote?.message
-      result = parseMMTrade(isExactIn, inputCurrency, outputCurrency, takerSideTokenAmount, makerSideTokenAmount)
-    }
-    return result
+    if (!inputCurrency || !outputCurrency || !mmQuote || !mmQuote?.message?.takerSideTokenAmount) return null
+
+    const { takerSideTokenAmount, makerSideTokenAmount } = mmQuote?.message || {}
+    return parseMMTrade(isExactIn, inputCurrency, outputCurrency, takerSideTokenAmount, makerSideTokenAmount)
   }, [inputCurrency, isExactIn, mmQuote, outputCurrency])
 
   const currencyBalances = useMemo(() => {

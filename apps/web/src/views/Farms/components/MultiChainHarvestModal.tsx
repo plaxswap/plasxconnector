@@ -93,7 +93,7 @@ const MultiChainHarvestModal: React.FC<MultiChainHarvestModalProp> = ({
       toastSuccess(
         `${t('Harvested')}!`,
         <ToastDescriptionWithTx txHash={receipt.transactionHash}>
-          {t('Your %symbol% earnings have been sent to your wallet!', { symbol: 'PLAX' })}
+          {t('Your %symbol% earnings have been sent to your wallet!', { symbol: 'CAKE' })}
         </ToastDescriptionWithTx>,
       )
       handleCancel()
@@ -129,7 +129,7 @@ const MultiChainHarvestModal: React.FC<MultiChainHarvestModalProp> = ({
                   <ChainLogo chainId={chainId} /> <ArrowForwardIcon color="#D67E0A" />
                   <ChainLogo chainId={ChainId.BSC} />
                 </FlexGap>
-                <span>{t('Harvest on Polygon Chain')}</span>
+                <span>{t('Harvest on BNB Smart Chain')}</span>
               </FlexGap>
             </MessageText>
           </Message>
@@ -137,7 +137,7 @@ const MultiChainHarvestModal: React.FC<MultiChainHarvestModalProp> = ({
         <LightGreyCard padding="16px">
           <Box mb="8px">
             <Text fontSize="12px" color="secondary" bold as="span">
-              {t('PLAX')}
+              {t('CAKE')}
             </Text>
             <Text fontSize="12px" color="textSubtle" ml="4px" bold as="span">
               {t('Earned')}
@@ -168,7 +168,7 @@ const MultiChainHarvestModal: React.FC<MultiChainHarvestModalProp> = ({
               </Button>
             ) : (
               <Button width="100%" variant="secondary" onClick={handleSwitchNetwork}>
-                {t('Switch to Polygon Chain')}
+                {t('Switch to BNB Smart Chain')}
               </Button>
             )}
           </Box>

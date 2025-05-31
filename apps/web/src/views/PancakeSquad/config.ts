@@ -53,7 +53,7 @@ const nftSaleConfigBuilder = ({ t, saleStatus, startTimestamp }: nftSaleType) =>
           text: getEventText({ saleStatus, eventStatus: [SaleStatusEnum.Claim], t }),
           altText: getAltText({ t, saleStatus, eventStatus: [SaleStatusEnum.Claim] }),
           infoText: t(
-            'During this phase, any wallet holding a Squad Ticket can redeem their ticket to mint a Plaxswap Squad NFT.',
+            'During this phase, any wallet holding a Squad Ticket can redeem their ticket to mint a Pancake Squad NFT.',
           ),
         },
       ]

@@ -15,6 +15,8 @@ export interface ITableProps {
   userDataReady: boolean
   cakePrice: BigNumber
   sortColumn?: string
+  totalRegularAllocPoint?: string
+  cakePerBlock?: string
 }
 
 const Container = styled.div`
@@ -63,7 +65,13 @@ const TableContainer = styled.div`
   position: relative;
 `
 
-const FarmTable: React.FC<React.PropsWithChildren<ITableProps>> = ({ farms, cakePrice, userDataReady }) => {
+const FarmTable: React.FC<React.PropsWithChildren<ITableProps>> = ({
+  farms,
+  cakePrice,
+  userDataReady,
+  totalRegularAllocPoint,
+  cakePerBlock,
+}) => {
   const tableWrapperEl = useRef<HTMLDivElement>(null)
   const { query } = useRouter()
 
@@ -93,6 +101,8 @@ const FarmTable: React.FC<React.PropsWithChildren<ITableProps>> = ({ farms, cake
     [],
   )
 
+  const totalMultipliers = totalRegularAllocPoint ? (Number(totalRegularAllocPoint) / 100).toString() : '-'
+
   const getFarmEarnings = (farm) => {
     const earnings = new BigNumber(farm?.userData?.earnings)
     return getBalanceNumber(earnings, FARM_DEFAULT_DECIMALS)
@@ -105,6 +115,10 @@ const FarmTable: React.FC<React.PropsWithChildren<ITableProps>> = ({ farms, cake
     const lpLabel = farm.lpSymbol
     const lowercaseQuery = latinise(typeof query?.search === 'string' ? query.search.toLowerCase() : '')
     const initialActivity = latinise(lpLabel?.toLowerCase()) === lowercaseQuery
+
+    const farmCakePerSecond =
+      farm.poolWeight && cakePerBlock ? (Number(farm.poolWeight) * Number(cakePerBlock)) / 1e8 : 10
+
     const row: RowProps = {
       apr: {
         value: getDisplayApr(farm.apr, farm.lpRewardsApr) || '0',
@@ -126,7 +140,7 @@ const FarmTable: React.FC<React.PropsWithChildren<ITableProps>> = ({ farms, cake
         token: farm.token,
         quoteToken: farm.quoteToken,
         isReady: farm.multiplier !== undefined,
-        isStable: farm.isStable,
+        isStaking: farm.userData?.stakedBalance.gt(0),
       },
       earned: {
         pid: farm.pid,
@@ -138,6 +152,13 @@ const FarmTable: React.FC<React.PropsWithChildren<ITableProps>> = ({ farms, cake
       multiplier: {
         multiplier: farm.multiplier,
         rewardCakePerSecond: true,
+        farmCakePerSecond:
+          farmCakePerSecond === 0
+            ? '0'
+            : farmCakePerSecond < 0.000001
+            ? '<0.000001'
+            : `~${farmCakePerSecond.toFixed(6)}`,
+        totalMultipliers,
       },
       type: farm.isCommunity ? 'community' : 'core',
       details: farm,

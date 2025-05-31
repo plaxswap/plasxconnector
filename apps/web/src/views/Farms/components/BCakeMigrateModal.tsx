@@ -1,4 +1,3 @@
-import { Contract } from '@ethersproject/contracts'
 import { useTranslation } from '@pancakeswap/localization'
 import {
   AutoRenewIcon,
@@ -12,14 +11,14 @@ import {
   useToast,
   useTooltip,
 } from '@pancakeswap/uikit'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import BigNumber from 'bignumber.js'
 import { ToastDescriptionWithTx } from 'components/Toast'
 import useCatchTxError from 'hooks/useCatchTxError'
-import { useBCakeProxyContract } from 'hooks/useContract'
+import { useBCakeProxyContract, useERC20 } from 'hooks/useContract'
 import { useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 import { getFullDisplayBalance } from '@pancakeswap/utils/formatBalance'
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 import { useBCakeProxyContractAddress } from '../hooks/useBCakeProxyContractAddress'
 import useProxyStakedActions from './YieldBooster/hooks/useProxyStakedActions'
 
@@ -123,7 +122,7 @@ export const InfoIconBox = styled.div`
   align-items: center;
 `
 interface BCakeMigrateModalProps {
-  lpContract: Contract
+  lpContract: ReturnType<typeof useERC20>
   stakedBalance: BigNumber
   onUnStack: (amount: string, callback: () => void) => void
   onDismiss?: () => void
@@ -143,7 +142,7 @@ export const BCakeMigrateModal: React.FC<BCakeMigrateModalProps> = ({
   onUnStack,
   pid,
 }) => {
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   const [activatedState, setActivatedState] = useState<Steps>(Steps.Unstake)
   const [isLoading, setIsLoading] = useState(false)
   const [isApproved, setIsApproved] = useState(false)
@@ -188,7 +187,7 @@ export const BCakeMigrateModal: React.FC<BCakeMigrateModalProps> = ({
 
   useEffect(() => {
     if (!bCakeProxy) return
-    bCakeProxy.lpApproved(lpContract.address).then((enabled) => {
+    bCakeProxy.read.lpApproved([lpContract.address]).then((enabled) => {
       setIsApproved(enabled)
     })
   }, [lpContract, bCakeProxy])

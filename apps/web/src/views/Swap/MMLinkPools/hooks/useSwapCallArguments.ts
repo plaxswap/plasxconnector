@@ -1,15 +1,15 @@
-import { Contract } from '@ethersproject/contracts'
 import { Currency, SwapParameters, TradeType } from '@pancakeswap/sdk'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
+import { toHex } from '@pancakeswap/v3-sdk'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useMemo } from 'react'
 import invariant from 'tiny-invariant'
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 import { MM_SIGNER, NATIVE_CURRENCY_ADDRESS } from '../constants'
 import { RFQResponse, TradeWithMM } from '../types'
 import { useMMSwapContract } from '../utils/exchange'
 
 export interface SwapCall {
-  contract: Contract
+  contract: ReturnType<typeof useMMSwapContract>
   parameters: SwapParameters
 }
 
@@ -24,7 +24,7 @@ export function useSwapCallArguments(
   rfq: RFQResponse['message'],
   recipientAddress: string | null, // the address of the recipient of the trade, or null if swap should be returned to sender
 ): SwapCall[] {
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
 
   const recipient = recipientAddress ?? account
   const deadline = useTransactionDeadline()
@@ -72,7 +72,7 @@ function swapCallParameters(
     },
     rfq.signature,
   ]
-  let value: string
+  let value: string | undefined
 
   if (etherIn) {
     value = rfq.takerSideTokenAmount
@@ -82,6 +82,6 @@ function swapCallParameters(
     methodName,
     // @ts-ignore
     args,
-    value,
+    value: value ? toHex(value) : undefined,
   }
 }

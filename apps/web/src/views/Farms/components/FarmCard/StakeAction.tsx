@@ -5,12 +5,11 @@ import useCatchTxError from 'hooks/useCatchTxError'
 import BCakeCalculator from 'views/Farms/components/YieldBooster/components/BCakeCalculator'
 import { useCallback, useContext, useState, useMemo } from 'react'
 import styled from 'styled-components'
-import { TransactionResponse } from '@ethersproject/providers'
 import { useRouter } from 'next/router'
-import { usePriceCakeBusd, useFarmFromPid } from 'state/farms/hooks'
+import { usePriceCakeUSD, useFarmFromPid } from 'state/farms/hooks'
 import { useAppDispatch } from 'state'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { ChainId, WNATIVE, NATIVE } from '@pancakeswap/sdk'
+import { SendTransactionResult } from 'wagmi/actions'
 import BigNumber from 'bignumber.js'
 import { useIsBloctoETH } from 'views/Farms'
 import { DEFAULT_TOKEN_DECIMAL } from 'config'
@@ -21,6 +20,7 @@ import { useTransactionAdder, useNonBscFarmPendingTransaction } from 'state/tran
 import { FarmTransactionStatus, NonBscFarmStepType } from 'state/transactions/actions'
 import WalletModal, { WalletView } from 'components/Menu/UserMenu/WalletModal'
 import { FarmWithStakedValue } from '@pancakeswap/farms'
+import useAccountActiveChain from 'hooks/useAccountActiveChain'
 import { YieldBoosterStateContext } from '../YieldBooster/components/ProxyFarmContainer'
 import { YieldBoosterState } from '../YieldBooster/hooks/useYieldBoosterState'
 import { useFirstTimeCrossFarming } from '../../hooks/useFirstTimeCrossFarming'
@@ -29,10 +29,10 @@ interface FarmCardActionsProps extends FarmWithStakedValue {
   lpLabel?: string
   addLiquidityUrl?: string
   displayApr?: string
-  onStake?: (value: string) => Promise<TransactionResponse>
-  onUnstake?: (value: string) => Promise<TransactionResponse>
+  onStake?: (value: string) => Promise<SendTransactionResult>
+  onUnstake?: (value: string) => Promise<SendTransactionResult>
   onDone?: () => void
-  onApprove?: () => Promise<TransactionResponse>
+  onApprove?: () => Promise<SendTransactionResult>
   isApproved?: boolean
 }
 
@@ -69,10 +69,10 @@ const StakeAction: React.FC<React.PropsWithChildren<FarmCardActionsProps>> = ({
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const addTransaction = useTransactionAdder()
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId } = useAccountActiveChain()
   const native = useNativeCurrency()
   const { tokenBalance, stakedBalance, allowance } = userData
-  const cakePrice = usePriceCakeBusd()
+  const cakePrice = usePriceCakeUSD()
   const router = useRouter()
   const { lpTokenStakedAmount } = useFarmFromPid(pid)
   const { toastSuccess } = useToast()
@@ -85,7 +85,7 @@ const StakeAction: React.FC<React.PropsWithChildren<FarmCardActionsProps>> = ({
 
   const crossChainWarningText = useMemo(() => {
     return isFirstTime
-      ? t('A small amount of %nativeToken% is required for the first-time setup of cross-chain PLAX farming.', {
+      ? t('A small amount of %nativeToken% is required for the first-time setup of cross-chain CAKE farming.', {
           nativeToken: native.symbol,
         })
       : t('For safety, cross-chain transactions will take around 30 minutes to confirm.')

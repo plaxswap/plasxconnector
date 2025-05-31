@@ -5,25 +5,49 @@ import { Field } from 'state/burn/actions'
 import { useTokenBalances } from 'state/wallet/hooks'
 import { useBurnState } from 'state/burn/hooks'
 import { StablePair, useStablePair } from 'views/AddLiquidity/AddStableLiquidity/hooks/useStableLPDerivedMintInfo'
-import { StableConfigContext } from 'views/Swap/StableSwap/hooks/useStableConfig'
+import { StableConfigContext } from 'views/Swap/hooks/useStableConfig'
 import useSWR from 'swr'
 import { useContext, useMemo } from 'react'
 import { useAccount } from 'wagmi'
+import { Address } from 'viem'
+import { useInfoStableSwapContract } from 'hooks/useContract'
 
-export function useGetRemovedTokenAmounts({ lpAmount }) {
+export function useGetRemovedTokenAmounts({ lpAmount }: { lpAmount: string }) {
   const { stableSwapInfoContract, stableSwapConfig } = useContext(StableConfigContext)
 
+  return useGetRemovedTokenAmountsNoContext({
+    stableSwapInfoContract,
+    stableSwapAddress: stableSwapConfig?.stableSwapAddress,
+    lpAmount,
+    token0: stableSwapConfig?.token0.wrapped,
+    token1: stableSwapConfig?.token1.wrapped,
+  })
+}
+
+export function useGetRemovedTokenAmountsNoContext({
+  lpAmount,
+  stableSwapAddress,
+  token0,
+  token1,
+  stableSwapInfoContract,
+}: {
+  lpAmount: string
+  stableSwapAddress: string
+  token0: Token
+  token1: Token
+  stableSwapInfoContract: ReturnType<typeof useInfoStableSwapContract>
+}) {
   const { data } = useSWR(
-    !lpAmount ? null : ['stableSwapInfoContract', 'calc_coins_amount', stableSwapConfig?.stableSwapAddress, lpAmount],
+    !lpAmount ? null : ['stableSwapInfoContract', 'calc_coins_amount', stableSwapAddress, lpAmount],
     async () => {
-      return stableSwapInfoContract.calc_coins_amount(stableSwapConfig?.stableSwapAddress, lpAmount)
+      return stableSwapInfoContract.read.calc_coins_amount([stableSwapAddress as Address, BigInt(lpAmount)])
     },
   )
 
   if (!Array.isArray(data)) return []
 
-  const tokenAAmount = CurrencyAmount.fromRawAmount(stableSwapConfig?.token0, data[0].toString())
-  const tokenBAmount = CurrencyAmount.fromRawAmount(stableSwapConfig?.token1, data[1].toString())
+  const tokenAAmount = CurrencyAmount.fromRawAmount(token0, data[0].toString())
+  const tokenBAmount = CurrencyAmount.fromRawAmount(token1, data[1].toString())
 
   return [tokenAAmount, tokenBAmount]
 }

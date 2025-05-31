@@ -11,12 +11,12 @@ import {
   FARMS_SMALL_AMOUNT_THRESHOLD,
 } from '@pancakeswap/uikit'
 import { useAccount } from 'wagmi'
+import { SendTransactionResult } from 'wagmi/actions'
 import BigNumber from 'bignumber.js'
 import { ToastDescriptionWithTx } from 'components/Toast'
 import useCatchTxError from 'hooks/useCatchTxError'
 
-import { TransactionResponse } from '@ethersproject/providers'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { BIG_ZERO } from '@pancakeswap/utils/bigNumber'
 import { getBalanceAmount } from '@pancakeswap/utils/formatBalance'
 import { Token } from '@pancakeswap/sdk'
@@ -30,7 +30,7 @@ interface FarmCardActionsProps {
   vaultPid?: number
   proxyCakeBalance?: number
   lpSymbol?: string
-  onReward?: () => Promise<TransactionResponse>
+  onReward?: () => Promise<SendTransactionResult>
   onDone?: () => void
 }
 
@@ -49,14 +49,14 @@ const HarvestAction: React.FC<React.PropsWithChildren<FarmCardActionsProps>> = (
   const { toastSuccess } = useToast()
   const { fetchWithCatchTxError, loading: pendingTx } = useCatchTxError()
   const { t } = useTranslation()
-  const cakePrice = usePriceCakeBusd()
+  const cakePrice = usePriceCakeUSD()
   const rawEarningsBalance = account ? getBalanceAmount(earnings) : BIG_ZERO
-  const displayBalance = rawEarningsBalance.toFixed(10, BigNumber.ROUND_DOWN)
+  const displayBalance = rawEarningsBalance.toFixed(5, BigNumber.ROUND_DOWN)
   const earningsBusd = rawEarningsBalance ? rawEarningsBalance.multipliedBy(cakePrice).toNumber() : 0
   const tooltipBalance = rawEarningsBalance.isGreaterThan(FARMS_SMALL_AMOUNT_THRESHOLD) ? displayBalance : '< 0.00001'
   const { targetRef, tooltip, tooltipVisible } = useTooltip(
     `${tooltipBalance} ${t(
-      `PLAX has been harvested to the farm booster contract and will be automatically sent to your wallet upon the next harvest.`,
+      `CAKE has been harvested to the farm booster contract and will be automatically sent to your wallet upon the next harvest.`,
     )}`,
     {
       placement: 'bottom',
@@ -79,7 +79,7 @@ const HarvestAction: React.FC<React.PropsWithChildren<FarmCardActionsProps>> = (
       toastSuccess(
         `${t('Harvested')}!`,
         <ToastDescriptionWithTx txHash={receipt.transactionHash}>
-          {t('Your %symbol% earnings have been sent to your wallet!', { symbol: 'PLAX' })}
+          {t('Your %symbol% earnings have been sent to your wallet!', { symbol: 'CAKE' })}
         </ToastDescriptionWithTx>,
       )
       onDone?.()

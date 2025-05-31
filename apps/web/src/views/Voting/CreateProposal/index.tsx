@@ -15,7 +15,6 @@ import {
   useToast,
   ReactMarkdown,
 } from '@pancakeswap/uikit'
-import { useWeb3LibraryContext } from '@pancakeswap/wagmi'
 import snapshot from '@snapshot-labs/snapshot.js'
 import isEmpty from 'lodash/isEmpty'
 import times from 'lodash/times'
@@ -31,7 +30,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { getBlockExploreLink } from 'utils'
 import { DatePicker, DatePickerPortal, TimePicker } from 'views/Voting/components/DatePicker'
-import { useAccount } from 'wagmi'
+import { useAccount, useWalletClient } from 'wagmi'
 import Layout from '../components/Layout'
 import VoteDetailsModal from '../components/VoteDetailsModal'
 import { ADMINS, PANCAKE_SPACE, VOTE_THRESHOLD } from '../config'
@@ -70,7 +69,7 @@ const CreateProposal = () => {
   const { name, body, choices, startDate, startTime, endDate, endTime, snapshot } = state
   const formErrors = getFormErrors(state, t)
 
-  const library = useWeb3LibraryContext()
+  const { data: signer } = useWalletClient()
 
   const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault()
@@ -78,7 +77,22 @@ const CreateProposal = () => {
     try {
       setIsLoading(true)
 
-      const data: any = await client.proposal(library as any, account, {
+      const web3 = {
+        getSigner: () => {
+          return {
+            _signTypedData: (domain, types, message) =>
+              signer.signTypedData({
+                account,
+                domain,
+                types,
+                message,
+                primaryType: 'Proposal',
+              }),
+          }
+        },
+      }
+
+      const data: any = await client.proposal(web3 as any, account, {
         space: PANCAKE_SPACE,
         type: 'single-choice',
         title: name,
@@ -149,7 +163,7 @@ const CreateProposal = () => {
     if (initialBlock > 0) {
       setState((prevState) => ({
         ...prevState,
-        snapshot: initialBlock,
+        snapshot: Number(initialBlock),
       }))
     }
   }, [initialBlock, setState])

@@ -21,7 +21,7 @@ const StyledCardBody = styled(CardBody)<{ isLoading: boolean }>`
 `
 
 interface CakeVaultProps extends CardProps {
-  pool: Pool.DeserializedPool<Token>
+  pool?: Pool.DeserializedPool<Token>
   showStakedOnly: boolean
   defaultFooterExpanded?: boolean
   showICake?: boolean
@@ -51,7 +51,11 @@ export const CakeVaultDetail: React.FC<React.PropsWithChildren<CakeVaultDetailPr
 }) => {
   const { t } = useTranslation()
 
-  const isLocked = (vaultPool as DeserializedLockedCakeVault).userData.locked
+  const isLocked = (vaultPool as DeserializedLockedCakeVault)?.userData?.locked
+
+  if (!pool) {
+    return null
+  }
 
   return (
     <>
@@ -65,6 +69,8 @@ export const CakeVaultDetail: React.FC<React.PropsWithChildren<CakeVaultDetailPr
             stakingToken={pool?.stakingToken}
             stakingTokenBalance={pool?.userData?.stakingTokenBalance}
             showICake={showICake}
+            pool={pool}
+            account={account}
           />
         ) : (
           <>
@@ -114,8 +120,8 @@ const CakeVaultCard: React.FC<React.PropsWithChildren<CakeVaultProps>> = ({
 }) => {
   const { address: account } = useAccount()
 
-  const vaultPool = useVaultPoolByKey(pool.vaultKey)
-  const { totalStaked } = pool
+  const vaultPool = useVaultPoolByKey(pool?.vaultKey || VaultKey.CakeVault)
+  const totalStaked = pool?.totalStaked
 
   const {
     userData: { userShares, isLoading: isVaultUserDataLoading },
@@ -123,9 +129,9 @@ const CakeVaultCard: React.FC<React.PropsWithChildren<CakeVaultProps>> = ({
   } = vaultPool
 
   const accountHasSharesStaked = userShares && userShares.gt(0)
-  const isLoading = !pool.userData || isVaultUserDataLoading
+  const isLoading = !pool?.userData || isVaultUserDataLoading
 
-  if (showStakedOnly && !accountHasSharesStaked) {
+  if (!pool || (showStakedOnly && !accountHasSharesStaked)) {
     return null
   }
 

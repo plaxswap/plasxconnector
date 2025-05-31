@@ -5,11 +5,12 @@ import BigNumber from 'bignumber.js'
 import { useDepositPottery } from 'views/Pottery/hooks/useDepositPottery'
 import { PotteryDepositStatus } from 'state/types'
 import { DEFAULT_TOKEN_DECIMAL } from 'config'
+import { Address } from 'wagmi'
 
 interface DepositButtonProps {
   status: PotteryDepositStatus
   depositAmount: string
-  potteryVaultAddress: string
+  potteryVaultAddress: Address
   setDepositAmount: (value: string) => void
 }
 
@@ -37,7 +38,7 @@ const DepositButton: React.FC<React.PropsWithChildren<DepositButtonProps>> = ({
       endIcon={isPending ? <AutoRenewIcon spin color="currentColor" /> : null}
       onClick={onClickDeposit}
     >
-      {t('Deposit PLAX')}
+      {t('Deposit CAKE')}
     </Button>
   )
 }

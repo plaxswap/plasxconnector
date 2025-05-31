@@ -2,8 +2,8 @@ import BigNumber from "bignumber.js";
 import { useMemo } from "react";
 import styled from "styled-components";
 import { useTranslation } from "@pancakeswap/localization";
-import { parseUnits } from "@ethersproject/units";
-import { formatBigNumber } from "@pancakeswap/utils/formatBalance";
+import { parseUnits } from "viem";
+import { formatBigInt } from "@pancakeswap/utils/formatBalance";
 import { trimTrailZero } from "@pancakeswap/utils/trimTrailZero";
 import { Flex } from "../../components/Box";
 import { Text } from "../../components/Text";
@@ -80,13 +80,13 @@ const ModalInput: React.FC<React.PropsWithChildren<ModalInputProps>> = ({
   const { t } = useTranslation();
   const isBalanceZero = max === "0" || !max;
 
-  const displayBalance = (balance: string) => {
+  const displayBalance = (balance: `${number}`) => {
     if (isBalanceZero) {
       return "0";
     }
 
     const balanceUnits = parseUnits(balance, decimals);
-    return formatBigNumber(balanceUnits, decimals, decimals);
+    return formatBigInt(balanceUnits, decimals, decimals);
   };
 
   const percentAmount = useMemo(
@@ -105,7 +105,7 @@ const ModalInput: React.FC<React.PropsWithChildren<ModalInputProps>> = ({
       <StyledTokenInput isWarning={isBalanceZero}>
         <Flex justifyContent="space-between" pl="16px">
           <Text fontSize="14px">{inputTitle}</Text>
-          <Text fontSize="14px">{t("Balance: %balance%", { balance: displayBalance(max) })}</Text>
+          <Text fontSize="14px">{t("Balance: %balance%", { balance: displayBalance(max as `${number}`) })}</Text>
         </Flex>
         <Flex alignItems="flex-end" justifyContent="space-between">
           <StyledInput
@@ -180,7 +180,7 @@ const ModalInput: React.FC<React.PropsWithChildren<ModalInputProps>> = ({
         <StyledErrorMessage fontSize="14px" color="failure">
           {t("No tokens to stake")}:{" "}
           <Link fontSize="14px" bold={false} href={addLiquidityUrl} external color="failure">
-            {t("Get %symbol%", { symbol })}
+            {t("Add %symbol%", { symbol })}
           </Link>
         </StyledErrorMessage>
       )}

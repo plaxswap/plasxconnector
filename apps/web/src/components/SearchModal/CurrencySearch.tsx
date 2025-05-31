@@ -4,12 +4,11 @@ import { Box, Input, Text, useMatchBreakpoints, AutoColumn, Column } from '@panc
 import { KeyboardEvent, RefObject, useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { useTranslation } from '@pancakeswap/localization'
 import { useDebounce, useSortedTokensByQuery } from '@pancakeswap/hooks'
-import { createFilterToken } from '@pancakeswap/utils/filtering'
 import useNativeCurrency from 'hooks/useNativeCurrency'
 import { FixedSizeList } from 'react-window'
 import { useAllLists, useInactiveListUrls } from 'state/lists/hooks'
-import { WrappedTokenInfo } from '@pancakeswap/token-lists'
-import { useAudioModeManager } from 'state/user/hooks'
+import { WrappedTokenInfo, createFilterToken } from '@pancakeswap/token-lists'
+import { useAudioPlay } from '@pancakeswap/utils/user'
 import { isAddress } from 'utils'
 import { useActiveChainId } from 'hooks/useActiveChainId'
 import { useAllTokens, useIsUserAddedToken, useToken } from '../../hooks/Tokens'
@@ -107,7 +106,7 @@ function CurrencySearch({
   const searchTokenIsAdded = useIsUserAddedToken(searchToken)
 
   const { isMobile } = useMatchBreakpoints()
-  const [audioPlay] = useAudioModeManager()
+  const [audioPlay] = useAudioPlay()
 
   const native = useNativeCurrency()
 

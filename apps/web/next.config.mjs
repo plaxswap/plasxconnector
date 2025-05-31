@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { withSentryConfig } from '@sentry/nextjs'
 import { withAxiom } from 'next-axiom'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import BundleAnalyzer from '@next/bundle-analyzer'
 import { createVanillaExtractPlugin } from '@vanilla-extract/next-plugin'
+import smartRouterPkgs from '@pancakeswap/smart-router/package.json' assert { type: 'json' }
+import { withWebSecurityHeaders } from '@pancakeswap/next-config/withWebSecurityHeaders'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const withBundleAnalyzer = BundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })
-
-// const withTM = NextTranspileModules([])
 
 const withVanillaExtract = createVanillaExtractPlugin()
 
@@ -22,14 +26,18 @@ const sentryWebpackPluginOptions =
         //   urlPrefix, include, ignore
         silent: false, // Logging when deploying to check if there is any problem
         validate: true,
+        hideSourceMaps: false,
         // https://github.com/getsentry/sentry-webpack-plugin#options.
       }
     : {
+        hideSourceMaps: false,
         silent: true, // Suppresses all logs
         dryRun: !process.env.SENTRY_AUTH_TOKEN,
       }
 
-const blocksPage = ['/affiliates-program', '/affiliates-program/dashboard']
+const workerDeps = Object.keys(smartRouterPkgs.dependencies)
+  .map((d) => d.replace('@pancakeswap/', 'packages/'))
+  .concat(['/packages/smart-router/', '/packages/swap-sdk/', '/packages/token-lists/'])
 
 /** @type {import('next').NextConfig} */
 const config = {
@@ -38,27 +46,24 @@ const config = {
   },
   experimental: {
     scrollRestoration: true,
-    transpilePackages: [
-      '@pancakeswap/ui',
-      '@pancakeswap/uikit',
-      '@pancakeswap/swap-sdk-core',
-      '@pancakeswap/farms',
-      '@pancakeswap/localization',
-      '@pancakeswap/hooks',
-      '@pancakeswap/multicall',
-      '@pancakeswap/token-lists',
-      '@pancakeswap/utils',
-      '@pancakeswap/tokens',
-      '@pancakeswap/smart-router',
-      '@wagmi',
-      'wagmi',
-      '@ledgerhq',
-      '@gnosis.pm/safe-apps-wagmi',
-    ],
+    outputFileTracingRoot: path.join(__dirname, '../../'),
+    outputFileTracingExcludes: {
+      '*': ['**@swc+core*', '**/@esbuild**'],
+    },
   },
+  transpilePackages: [
+    '@pancakeswap/ui',
+    '@pancakeswap/uikit',
+    '@pancakeswap/farms',
+    '@pancakeswap/pools',
+    '@pancakeswap/localization',
+    '@pancakeswap/hooks',
+    '@pancakeswap/utils',
+  ],
   reactStrictMode: true,
   swcMinify: true,
   images: {
+    contentDispositionType: 'attachment',
     remotePatterns: [
       {
         protocol: 'https',
@@ -67,9 +72,6 @@ const config = {
       },
     ],
   },
-  images: {
-    unoptimized: true
-},
   async rewrites() {
     return [
       {
@@ -84,6 +86,15 @@ const config = {
   },
   async headers() {
     return [
+      {
+        source: '/favicon.ico',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, immutable, max-age=31536000',
+          },
+        ],
+      },
       {
         source: '/logo.png',
         headers: [
@@ -165,14 +176,19 @@ const config = {
         destination: '/info/pairs/:address',
         permanent: true,
       },
-      ...blocksPage.map((p) => ({
-        source: p,
-        destination: '/404',
-        permanent: false
-      }))
+      {
+        source: '/api/v3/:chainId/farms/liquidity/:address',
+        destination: 'https://farms-api.pancakeswap.com/v3/:chainId/liquidity/:address',
+        permanent: false,
+      },
+      {
+        source: '/images/tokens/:address',
+        destination: 'https://tokens.pancakeswap.finance/images/:address',
+        permanent: false,
+      }
     ]
   },
-  webpack: (webpackConfig, { webpack }) => {
+  webpack: (webpackConfig, { webpack, isServer }) => {
     // tree shake sentry tracing
     webpackConfig.plugins.push(
       new webpack.DefinePlugin({
@@ -180,8 +196,25 @@ const config = {
         __SENTRY_TRACING__: false,
       }),
     )
+    if (!isServer && webpackConfig.optimization.splitChunks) {
+      // webpack doesn't understand worker deps on quote worker, so we need to manually add them
+      // https://github.com/webpack/webpack/issues/16895
+      // eslint-disable-next-line no-param-reassign
+      webpackConfig.optimization.splitChunks.cacheGroups.workerChunks = {
+        chunks: 'all',
+        test(module) {
+          const resource = module.nameForCondition?.() ?? ''
+          return resource ? workerDeps.some((d) => resource.includes(d)) : false
+        },
+        priority: 31,
+        name: 'worker-chunks',
+        reuseExistingChunk: true,
+      }
+    }
     return webpackConfig
   },
 }
 
-export default withBundleAnalyzer(withVanillaExtract(withSentryConfig(withAxiom(config), sentryWebpackPluginOptions)))
+export default withBundleAnalyzer(
+  withVanillaExtract(withSentryConfig(withAxiom(withWebSecurityHeaders(config)), sentryWebpackPluginOptions)),
+)

@@ -1,4 +1,4 @@
-import { parseUnits } from '@ethersproject/units'
+import { parseEther } from 'viem'
 import {
   ButtonMenu,
   ButtonMenuItem,
@@ -7,7 +7,7 @@ import {
   IconButton,
   InjectedModalProps,
   ModalBody,
-  ModalContainer,
+  ModalWrapper,
   ModalHeader as UIKitModalHeader,
   ModalTitle,
 } from '@pancakeswap/uikit'
@@ -29,7 +29,7 @@ interface WalletModalProps extends InjectedModalProps {
   initialView?: WalletView
 }
 
-export const LOW_NATIVE_BALANCE = parseUnits('0.002', 'ether')
+export const LOW_NATIVE_BALANCE = parseEther('0.002', 'wei')
 
 const ModalHeader = styled(UIKitModalHeader)`
   background: ${({ theme }) => theme.colors.gradientBubblegum};
@@ -67,14 +67,14 @@ const WalletModal: React.FC<React.PropsWithChildren<WalletModalProps>> = ({
   const { t } = useTranslation()
   const { address: account } = useAccount()
   const { data, isFetched } = useBalance({ address: account })
-  const hasLowNativeBalance = isFetched && data && data.value.lte(LOW_NATIVE_BALANCE)
+  const hasLowNativeBalance = isFetched && data && data.value <= LOW_NATIVE_BALANCE
 
   const handleClick = useCallback((newIndex: number) => {
     setView(newIndex)
   }, [])
 
   return (
-    <ModalContainer $minWidth="360px">
+    <ModalWrapper minWidth="360px">
       <ModalHeader>
         <ModalTitle>
           <Heading>{t('Your Wallet')}</Heading>
@@ -91,7 +91,7 @@ const WalletModal: React.FC<React.PropsWithChildren<WalletModalProps>> = ({
         {view === WalletView.TRANSACTIONS && <WalletTransactions onDismiss={onDismiss} />}
         {view === WalletView.WRONG_NETWORK && <WalletWrongNetwork onDismiss={onDismiss} />}
       </ModalBody>
-    </ModalContainer>
+    </ModalWrapper>
   )
 }
 

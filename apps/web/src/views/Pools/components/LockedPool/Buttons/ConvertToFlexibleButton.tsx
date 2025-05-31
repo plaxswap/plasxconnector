@@ -12,9 +12,11 @@ import { useAppDispatch } from 'state'
 import { fetchCakeVaultUserData } from 'state/pools'
 import { VaultKey } from 'state/types'
 import { useSWRConfig } from 'swr'
+import { useActiveChainId } from 'hooks/useActiveChainId'
 
 const ConvertToFlexibleButton: React.FC<React.PropsWithChildren<ButtonProps>> = (props) => {
   const dispatch = useAppDispatch()
+  const { chainId } = useActiveChainId()
 
   const { address: account } = useAccount()
   const { fetchWithCatchTxError, loading: pendingTx } = useCatchTxError()
@@ -26,11 +28,11 @@ const ConvertToFlexibleButton: React.FC<React.PropsWithChildren<ButtonProps>> = 
 
   const handleUnlock = useCallback(async () => {
     const callOptions = {
-      gasLimit: vaultPoolConfig[VaultKey.CakeVault].gasLimit,
+      gas: vaultPoolConfig[VaultKey.CakeVault].gasLimit,
     }
 
     const receipt = await fetchWithCatchTxError(() => {
-      const methodArgs = [account]
+      const methodArgs = [account] as const
       return callWithGasPrice(vaultPoolContract, 'unlock', methodArgs, callOptions)
     })
 
@@ -41,10 +43,10 @@ const ConvertToFlexibleButton: React.FC<React.PropsWithChildren<ButtonProps>> = 
           {t('Your funds have been staked in the pool')}
         </ToastDescriptionWithTx>,
       )
-      dispatch(fetchCakeVaultUserData({ account }))
+      dispatch(fetchCakeVaultUserData({ account, chainId }))
       mutate(['userCakeLockStatus', account])
     }
-  }, [t, toastSuccess, account, callWithGasPrice, dispatch, fetchWithCatchTxError, vaultPoolContract, mutate])
+  }, [t, toastSuccess, account, callWithGasPrice, dispatch, fetchWithCatchTxError, vaultPoolContract, mutate, chainId])
 
   return (
     <Button width="100%" disabled={pendingTx} onClick={handleUnlock} variant="secondary" {...props}>

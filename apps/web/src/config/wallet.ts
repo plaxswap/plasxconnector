@@ -2,14 +2,14 @@ import { WalletConfigV2 } from '@pancakeswap/ui-wallets'
 import { WalletFilledIcon } from '@pancakeswap/uikit'
 import type { ExtendEthereum } from 'global'
 import { isFirefox } from 'react-device-detect'
-import WalletConnectProvider from '@walletconnect/ethereum-provider'
 import { getTrustWalletProvider } from '@pancakeswap/wagmi/connectors/trustWallet'
-import { metaMaskConnector, walletConnectNoQrCodeConnector } from '../utils/wagmi'
+import { walletConnectNoQrCodeConnector } from '../utils/wagmi'
+import { ASSET_CDN } from './constants/endpoints'
 
 export enum ConnectorNames {
   MetaMask = 'metaMask',
   Injected = 'injected',
-  WalletConnect = 'walletConnect',
+  WalletConnect = 'walletConnectLegacy',
   BSC = 'bsc',
   Blocto = 'blocto',
   WalletLink = 'coinbaseWallet',
@@ -24,7 +24,7 @@ const createQrCode = (chainId: number, connect) => async () => {
 
   // wait for WalletConnect to setup in order to get the uri
   await delay(100)
-  const { uri } = ((await walletConnectNoQrCodeConnector.getProvider()) as WalletConnectProvider).connector
+  const { uri } = ((await walletConnectNoQrCodeConnector.getProvider()) as any).connector
 
   return uri
 }
@@ -57,9 +57,10 @@ const walletsConfig = ({
     {
       id: 'metamask',
       title: 'Metamask',
-      icon: '/images/wallets/metamask.png',
+      icon: `${ASSET_CDN}/images/wallets/metamask.png`,
       get installed() {
-        return isMetamaskInstalled() && metaMaskConnector.ready
+        return isMetamaskInstalled()
+        // && metaMaskConnector.ready
       },
       connectorId: ConnectorNames.MetaMask,
       deepLink: 'https://metamask.app.link/dapp/pancakeswap.finance/',
@@ -69,7 +70,7 @@ const walletsConfig = ({
     {
       id: 'binance',
       title: 'Binance Wallet',
-      icon: '/images/wallets/binance.png',
+      icon: `${ASSET_CDN}/images/wallets/binance.png`,
       get installed() {
         return typeof window !== 'undefined' && Boolean(window.BinanceChain)
       },
@@ -86,18 +87,18 @@ const walletsConfig = ({
     {
       id: 'coinbase',
       title: 'Coinbase Wallet',
-      icon: '/images/wallets/coinbase.png',
+      icon: `${ASSET_CDN}/images/wallets/coinbase.png`,
       connectorId: ConnectorNames.WalletLink,
     },
     {
       id: 'trust',
       title: 'Trust Wallet',
-      icon: '/images/wallets/trust.png',
+      icon: `${ASSET_CDN}/images/wallets/trust.png`,
       connectorId: ConnectorNames.TrustWallet,
       get installed() {
         return !!getTrustWalletProvider()
       },
-      deepLink: 'https://link.trustwallet.com/',
+      deepLink: 'https://link.trustwallet.com/open_url?coin_id=20000714&url=https://pancakeswap.finance/',
       downloadLink: 'https://chrome.google.com/webstore/detail/trust-wallet/egjidjbpglichdcondbcbdnbeeppgdph',
       guide: {
         desktop: 'https://trustwallet.com/browser-extension',
@@ -108,13 +109,13 @@ const walletsConfig = ({
     {
       id: 'walletconnect',
       title: 'WalletConnect',
-      icon: '/images/wallets/walletconnect.png',
+      icon: `${ASSET_CDN}/images/wallets/walletconnect.png`,
       connectorId: ConnectorNames.WalletConnect,
     },
     {
       id: 'opera',
       title: 'Opera Wallet',
-      icon: '/images/wallets/opera.png',
+      icon: `${ASSET_CDN}/images/wallets/opera.png`,
       connectorId: ConnectorNames.Injected,
       get installed() {
         return typeof window !== 'undefined' && Boolean(window.ethereum?.isOpera)
@@ -124,7 +125,7 @@ const walletsConfig = ({
     {
       id: 'brave',
       title: 'Brave Wallet',
-      icon: '/images/wallets/brave.png',
+      icon: `${ASSET_CDN}/images/wallets/brave.png`,
       connectorId: ConnectorNames.Injected,
       get installed() {
         return typeof window !== 'undefined' && Boolean(window.ethereum?.isBraveWallet)
@@ -134,7 +135,7 @@ const walletsConfig = ({
     {
       id: 'math',
       title: 'MathWallet',
-      icon: '/images/wallets/mathwallet.png',
+      icon: `${ASSET_CDN}/images/wallets/mathwallet.png`,
       connectorId: ConnectorNames.Injected,
       get installed() {
         return typeof window !== 'undefined' && Boolean(window.ethereum?.isMathWallet)
@@ -144,7 +145,7 @@ const walletsConfig = ({
     {
       id: 'tokenpocket',
       title: 'TokenPocket',
-      icon: '/images/wallets/tokenpocket.png',
+      icon: `${ASSET_CDN}/images/wallets/tokenpocket.png`,
       connectorId: ConnectorNames.Injected,
       get installed() {
         return typeof window !== 'undefined' && Boolean(window.ethereum?.isTokenPocket)
@@ -154,7 +155,7 @@ const walletsConfig = ({
     {
       id: 'safepal',
       title: 'SafePal',
-      icon: '/images/wallets/safepal.png',
+      icon: `${ASSET_CDN}/images/wallets/safepal.png`,
       connectorId: ConnectorNames.Injected,
       get installed() {
         return typeof window !== 'undefined' && Boolean((window.ethereum as ExtendEthereum)?.isSafePal)
@@ -166,7 +167,7 @@ const walletsConfig = ({
     {
       id: 'coin98',
       title: 'Coin98',
-      icon: '/images/wallets/coin98.png',
+      icon: `${ASSET_CDN}/images/wallets/coin98.png`,
       connectorId: ConnectorNames.Injected,
       get installed() {
         return (
@@ -179,7 +180,7 @@ const walletsConfig = ({
     {
       id: 'blocto',
       title: 'Blocto',
-      icon: '/images/wallets/blocto.png?v=2',
+      icon: `${ASSET_CDN}/images/wallets/blocto.png`,
       connectorId: ConnectorNames.Blocto,
       get installed() {
         return typeof window !== 'undefined' && Boolean((window.ethereum as ExtendEthereum)?.isBlocto)
@@ -190,7 +191,7 @@ const walletsConfig = ({
     {
       id: 'ledger',
       title: 'Ledger',
-      icon: '/images/wallets/ledger.png',
+      icon: `${ASSET_CDN}/images/wallets/ledger.png`,
       connectorId: ConnectorNames.Ledger,
     },
   ]
@@ -226,5 +227,5 @@ const docLangCodeMapping: Record<string, string> = {
 
 export const getDocLink = (code: string) =>
   docLangCodeMapping[code]
-    ? `https://docs.plaxswap.io/v/${docLangCodeMapping[code]}/get-started/wallet-guide`
-    : `https://docs.plaxswap.io/get-started/wallet-guide`
+    ? `https://docs.pancakeswap.finance/v/${docLangCodeMapping[code]}/get-started/wallet-guide`
+    : `https://docs.pancakeswap.finance/get-started/wallet-guide`

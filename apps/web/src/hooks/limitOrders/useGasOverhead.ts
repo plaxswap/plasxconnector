@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
-import { formatUnits } from '@ethersproject/units'
+import { formatUnits } from 'viem'
 import { CurrencyAmount, Price, Currency } from '@pancakeswap/sdk'
-import { BigNumber } from '@ethersproject/bignumber'
 import { useTradeExactIn } from 'hooks/Trades'
 import tryParseAmount from '@pancakeswap/utils/tryParseAmount'
 import { Rate } from 'state/limitOrders/types'
@@ -18,16 +17,15 @@ export default function useGasOverhead(
 ): {
   realExecutionPrice: Price<Currency, Currency> | undefined | null
   realExecutionPriceAsString: string | undefined
-  gasPrice: string | undefined
 } {
   const { chainId } = useActiveChainId()
   const native = useNativeCurrency()
 
   const gasPrice = useGasPrice()
-  const requiredGas = formatUnits(gasPrice ? BigNumber.from(gasPrice).mul(GENERIC_GAS_LIMIT_ORDER_EXECUTION) : '0')
+  const requiredGas = formatUnits(gasPrice ? gasPrice * GENERIC_GAS_LIMIT_ORDER_EXECUTION : 0n, 18)
   const requiredGasAsCurrencyAmount = tryParseAmount(requiredGas, native)
 
-  const inputIsBNB = inputAmount?.currency.symbol === 'POL'
+  const inputIsBNB = inputAmount?.currency.symbol === 'BNB'
 
   const gasCostInInputTokens = useTradeExactIn(requiredGasAsCurrencyAmount, inputIsBNB ? null : inputAmount?.currency)
 
@@ -58,10 +56,9 @@ export default function useGasOverhead(
   }, [rateType, realExecutionPrice])
 
   return chainId
-    ? { realExecutionPrice, gasPrice, realExecutionPriceAsString }
+    ? { realExecutionPrice, realExecutionPriceAsString }
     : {
         realExecutionPrice: undefined,
         realExecutionPriceAsString: undefined,
-        gasPrice: undefined,
       }
 }

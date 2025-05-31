@@ -18,6 +18,7 @@ import {
   UserMenuItem,
   DropdownMenuItemType,
   DropdownMenu,
+  useMatchBreakpoints,
 } from '@pancakeswap/uikit'
 import { useRouter } from 'next/router'
 import { useTheme as useNextTheme } from 'next-themes'
@@ -77,13 +78,27 @@ const TxnLink = styled(Link)`
 `
 
 const MenuConfig = [
-  { title: 'Bridge', href: '/' },
+  { title: 'CAKE', href: '/' },
+  {
+    title: 'EVMs',
+    href: '/axelar',
+    items: [
+      {
+        label: 'Axelar',
+        href: '/axelar',
+      },
+      {
+        label: 'Stargate',
+        href: '/stargate',
+      },
+    ],
+  },
   {
     title: 'Aptos',
     href: '/aptos',
     items: [
       {
-        label: 'CAKE Bridging',
+        label: 'Pancake Bridge',
         href: '/aptos',
       },
       {
@@ -142,7 +157,7 @@ export function Menu() {
         <Box mr="16px">
           <ThemeSwitcher isDark={theme.isDark} toggleTheme={() => setTheme(theme.isDark ? 'light' : 'dark')} />
         </Box>
-        {nextRouter.pathname === '/' && <User />}
+        {nextRouter.pathname === '/stargate' && <User />}
       </Flex>
     </Flex>
   )
@@ -175,7 +190,7 @@ const UserMenuItems = ({ onShowTx }: { onShowTx: () => void }) => {
 
 async function switchNetwork(chainId: number) {
   const chain = CHAINS_STARGATE.find((c) => c.id === chainId)
-  const provider = window.stargate?.wallet?.ethereum?.signer?.provider?.provider ?? (window as any).ethereum
+  const provider = window?.stargate?.wallet?.ethereum?.signer?.provider?.provider ?? (window as any)?.ethereum
   if (chain && provider) {
     try {
       await provider.request({
@@ -221,7 +236,7 @@ function useStargateReaction<T>(expression: () => T) {
   useEffect(() => {
     customElements.whenDefined('stargate-widget').then(() => {
       setValue(savedExpression.current)
-      window.stargate.utils.reaction(savedExpression.current, (v: T) => {
+      window?.stargate?.utils?.reaction(savedExpression.current, (v: T) => {
         setValue(v)
       })
     })
@@ -252,7 +267,7 @@ function RecentTransactionsModal({
   return (
     <Modal title="Recent Transactions" onDismiss={onDismiss}>
       <Box mb="16px" style={{ textAlign: 'right' }}>
-        <Button scale="sm" onClick={() => window.stargate.transaction.clear()} variant="text" px="0">
+        <Button scale="sm" onClick={() => window?.stargate?.transaction?.clear()} variant="text" px="0">
           Clear all
         </Button>
       </Box>
@@ -263,11 +278,11 @@ function RecentTransactionsModal({
             // eslint-disable-next-line react/no-array-index-key
             key={i}
             href={
-              txn.confirmation
-                ? `${findChainByStargateId(txn.confirmation.chainId)?.chain.blockExplorers?.default.url}/tx/${
-                    txn.confirmation.hash
+              txn?.confirmation
+                ? `${findChainByStargateId(txn?.confirmation?.chainId)?.chain?.blockExplorers?.default?.url}/tx/${
+                    txn?.confirmation?.hash
                   }`
-                : `${txnChain?.chain.blockExplorers?.default.url}/tx/${txn.hash}`
+                : `${txnChain?.chain?.blockExplorers?.default?.url}/tx/${txn?.hash}`
             }
             external
           >
@@ -279,9 +294,9 @@ function RecentTransactionsModal({
                   <Image
                     width={18}
                     height={18}
-                    src={`/chains/${txnChain?.chain.id}.png`}
+                    src={`/chains/${txnChain?.chain?.id}.png`}
                     unoptimized
-                    alt={`${txnChain?.chain.name}`}
+                    alt={`${txnChain?.chain?.name}`}
                   />
                 </>
               )}
@@ -291,16 +306,16 @@ function RecentTransactionsModal({
                   <Image
                     width={18}
                     height={18}
-                    src={`/chains/${findChainByStargateId(txn.input.from.chainId)?.chain.id}.png`}
+                    src={`/chains/${findChainByStargateId(txn?.input?.from?.chainId)?.chain?.id}.png`}
                     unoptimized
-                    alt={`chain-${findChainByStargateId(txn.input.from.chainId)?.chain.name}`}
+                    alt={`chain-${findChainByStargateId(txn?.input?.from?.chainId)?.chain?.name}`}
                   />
                   to {txn.input.to.token.symbol}{' '}
                   <Image
                     width={18}
                     height={18}
-                    src={`/chains/${findChainByStargateId(txn.input.to.chainId)?.chain.id}.png`}
-                    alt={`chain-${findChainByStargateId(txn.input.to.chainId)?.chain.name}`}
+                    src={`/chains/${findChainByStargateId(txn?.input?.to?.chainId)?.chain?.id}.png`}
+                    alt={`chain-${findChainByStargateId(txn?.input?.to?.chainId)?.chain?.name}`}
                     unoptimized
                   />
                 </>
@@ -389,6 +404,7 @@ type TransferInput = {
 }
 
 function User() {
+  const { isMobile } = useMatchBreakpoints()
   const wallet = useStargateReaction(() => window.stargate.wallet.ethereum)
   const [pending, setPending] = useState([])
   const transactions = useStargateReaction(() => window.stargate.transaction.transactions)
@@ -408,6 +424,10 @@ function User() {
 
   const isWrongNetwork = chainId && !chain
   const hasPendingTransactions = pending.length > 0
+
+  if (isMobile && !account) {
+    return null
+  }
 
   if (isWrongNetwork) {
     return (

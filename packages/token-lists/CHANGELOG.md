@@ -1,5 +1,18 @@
 # @pancakeswap/token-lists
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [b5dbd2921]
+  - @pancakeswap/swap-sdk-core@1.0.0
+
+## 0.0.6
+
+### Patch Changes
+
+- d5bf9101d: chore: Bump up jotai
+
 ## 0.0.5
 
 ### Patch Changes

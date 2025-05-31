@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Box, Flex, lightColors, Spinner, Text, Timeline } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
-import { useGetCakeBalance } from 'hooks/useTokenBalance'
+import { useBSCCakeBalance } from 'hooks/useTokenBalance'
 import useTheme from 'hooks/useTheme'
 import { StyledWaveContainer } from 'views/PancakeSquad/styles'
 import { UserStatusEnum } from 'views/PancakeSquad/types'
@@ -32,7 +32,7 @@ const PancakeSquadHeader: React.FC<React.PropsWithChildren<PancakeSquadHeaderTyp
 }) => {
   const { t } = useTranslation()
   const { theme, isDark } = useTheme()
-  const { balance: cakeBalance } = useGetCakeBalance()
+  const { balance: cakeBalance } = useBSCCakeBalance()
   const displayEventBlock = !!eventInfos || isLoading
   const {
     ticketsOfUser,
@@ -63,11 +63,11 @@ const PancakeSquadHeader: React.FC<React.PropsWithChildren<PancakeSquadHeaderTyp
     >
       <Flex width="100%">
         <Link href="/nfts" passHref>
-          <Text as="a" color="primary" bold>{`< ${t('NFT Marketplace')}`}</Text>
+          <Text color="primary" bold>{`< ${t('NFT Marketplace')}`}</Text>
         </Link>
       </Flex>
       <StyledSquadTitle my="32px" color={lightColors.invertedContrast} bold textAlign="center">
-        {t('Plaxswap Squad')}
+        {t('Pancake Squad')}
       </StyledSquadTitle>
       <Text color={lightColors.warning} textAlign="center" bold>
         {`${t('Presale:')} 04:00 UTC, Oct. 7`}
@@ -76,7 +76,7 @@ const PancakeSquadHeader: React.FC<React.PropsWithChildren<PancakeSquadHeaderTyp
         {`${t('Public Sale:')} 08:00 UTC, Oct. 7`}
       </Text>
       <Text color={lightColors.warning} textAlign="center" bold>
-        {t('Mint Cost: %minCost% PLAX each', {
+        {t('Mint Cost: %minCost% CAKE each', {
           minCost: DEFAULT_CAKE_COST,
         })}
       </Text>

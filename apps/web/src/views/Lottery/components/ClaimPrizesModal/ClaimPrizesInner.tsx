@@ -7,7 +7,7 @@ import useCatchTxError from 'hooks/useCatchTxError'
 import { useLotteryV2Contract } from 'hooks/useContract'
 import { useState } from 'react'
 import { useAppDispatch } from 'state'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { fetchUserLotteries } from 'state/lottery'
 import { useLottery } from 'state/lottery/hooks'
 import { useGasPrice } from 'state/user/hooks'
@@ -36,7 +36,7 @@ const ClaimInnerContainer: React.FC<React.PropsWithChildren<ClaimInnerProps>> = 
   const lotteryContract = useLotteryV2Contract()
   const activeClaimData = roundsToClaim[activeClaimIndex]
 
-  const cakePriceBusd = usePriceCakeBusd()
+  const cakePriceBusd = usePriceCakeUSD()
   const cakeReward = activeClaimData.cakeTotal
   const dollarReward = cakeReward.times(cakePriceBusd)
   const rewardAsBalance = getBalanceAmount(cakeReward).toNumber()
@@ -93,7 +93,7 @@ const ClaimInnerContainer: React.FC<React.PropsWithChildren<ClaimInnerProps>> = 
       toastSuccess(
         t('Prizes Collected!'),
         <ToastDescriptionWithTx txHash={receipt.transactionHash}>
-          {t('Your PLAX prizes for round %lotteryId% have been sent to your wallet', { lotteryId })}
+          {t('Your CAKE prizes for round %lotteryId% have been sent to your wallet', { lotteryId })}
         </ToastDescriptionWithTx>,
       )
       handleProgressToNextClaim()
@@ -146,7 +146,7 @@ const ClaimInnerContainer: React.FC<React.PropsWithChildren<ClaimInnerProps>> = 
     if (receipts.length === transactionsToFire) {
       toastSuccess(
         t('Prizes Collected!'),
-        t('Your PLAX prizes for round %lotteryId% have been sent to your wallet', { lotteryId }),
+        t('Your CAKE prizes for round %lotteryId% have been sent to your wallet', { lotteryId }),
       )
       handleProgressToNextClaim()
     }
@@ -170,7 +170,7 @@ const ClaimInnerContainer: React.FC<React.PropsWithChildren<ClaimInnerProps>> = 
             fontSize="44px"
             bold
             color="secondary"
-            unit=" PLAX"
+            unit=" CAKE!"
           />
           <PresentWonIcon ml={['0', null, '12px']} width="64px" />
         </Flex>

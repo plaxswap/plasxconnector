@@ -10,9 +10,9 @@ import TransWithElement from '../../TransWithElement'
 const NotOkNFT = ({ admissionProfile }) => {
   const { t } = useTranslation()
 
-  const keyword = '%Plaxswap Squad NFT%'
+  const keyword = '%Pancake Squad NFT%'
 
-  const rawText = t(`Set %Plaxswap Squad NFT% as Pancake Profile avatar`)
+  const rawText = t(`Set %Pancake Squad NFT% as Pancake Profile avatar`)
 
   return (
     <TransWithElement
@@ -24,7 +24,7 @@ const NotOkNFT = ({ admissionProfile }) => {
             style={{ display: 'inline' }}
             href={`https://pancakeswap.finance/nfts/collections/${admissionProfile}`}
           >
-            {t('Plaxswap Squad NFT')}
+            {t('Pancake Squad NFT')}
           </LinkExternal>
           <br />
         </>
@@ -66,7 +66,7 @@ const configCriterias = (pointThreshold: number, admissionProfile: string, t) =>
     okMsg: t('Eligible NFT avatar found!'),
     notOkMsg: <NotOkNFT admissionProfile={admissionProfile} />,
     NotOkIcon: AccountIcon,
-    name: t('Plaxswap Squad'),
+    name: t('Pancake Squad'),
   },
   isQualifiedPoints: {
     OkIcon: OkProfilePointsIcon,

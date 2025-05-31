@@ -137,14 +137,14 @@ export default function SwapModalFooter({
                   </Text>
                   <Text>- {t('%amount% to LP token holders', { amount: lpHoldersFeePercent })}</Text>
                   <Text>- {t('%amount% to the Treasury', { amount: treasuryFeePercent })}</Text>
-                  <Text>- {t('%amount% towards PLAX buyback and burn', { amount: buyBackFeePercent })}</Text>
+                  <Text>- {t('%amount% towards CAKE buyback and burn', { amount: buyBackFeePercent })}</Text>
                   <Text mt="12px">
                     {t('For each stableswap trade, refer to the fee table')}
                     <Link
                       style={{ display: 'inline' }}
                       ml="4px"
                       external
-                      href="https://docs.plaxswap.io/products/stableswap#stableswap-fees"
+                      href="https://docs.pancakeswap.finance/products/stableswap#stableswap-fees"
                     >
                       {t('here.')}
                     </Link>

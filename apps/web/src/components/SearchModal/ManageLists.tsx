@@ -110,7 +110,7 @@ const ListRow = memo(function ListRow({ listUrl }: { listUrl: string }) {
         </Button>
       )}
     </div>,
-    { placement: 'right-end', trigger: 'click' },
+    { placement: 'right-end', trigger: 'click', isInPortal: false },
   )
 
   if (!list) return null
@@ -250,14 +250,11 @@ function ManageLists({
   const [addError, setAddError] = useState<string | undefined>()
 
   useEffect(() => {
-    async function fetchTempList() {
+    // if valid url, fetch details for card
+    if (validUrl) {
       fetchList(listUrlInput, false)
         .then((list) => setTempList(list))
         .catch(() => setAddError('Error importing list'))
-    }
-    // if valid url, fetch details for card
-    if (validUrl) {
-      fetchTempList()
     } else {
       setTempList(undefined)
       if (listUrlInput !== '') {

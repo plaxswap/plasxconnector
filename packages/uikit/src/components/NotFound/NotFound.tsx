@@ -1,8 +1,11 @@
 import styled from "styled-components";
 import { NextSeo } from "next-seo";
-import { Button, Heading, Text, LogoIcon } from "@pancakeswap/uikit";
 import { useTranslation } from "@pancakeswap/localization";
 import Link from "next/link";
+import { LogoIcon } from "../Svg";
+import { Heading } from "../Heading";
+import { Text } from "../Text";
+import { Button } from "../Button";
 
 const StyledNotFound = styled.div`
   align-items: center;
@@ -23,9 +26,7 @@ const NotFound = ({ statusCode = 404 }: { statusCode?: number }) => {
         <Heading scale="xxl">{statusCode}</Heading>
         <Text mb="16px">{t("Oops, page not found.")}</Text>
         <Link href="/" passHref>
-          <Button as="a" scale="sm">
-            {t("Back Home")}
-          </Button>
+          <Button scale="sm">{t("Back Home")}</Button>
         </Link>
       </StyledNotFound>
     </>

@@ -1,26 +1,32 @@
-import { BigNumber as EthersBigNumber } from '@ethersproject/bignumber'
-import { parseUnits } from '@ethersproject/units'
+import { parseEther } from 'viem'
 import { SerializedFarmsState } from '@pancakeswap/farms'
 import { Token } from '@pancakeswap/sdk'
-import { SerializedWrappedToken } from '@pancakeswap/token-lists'
-import { Pool } from '@pancakeswap/uikit'
+import { SerializedPoolWithInfo } from '@pancakeswap/pools'
+import { Address } from 'wagmi'
 import BigNumber from 'bignumber.js'
-import { CampaignType, FetchStatus, LotteryStatus, LotteryTicket, Team, TranslatableText } from 'config/constants/types'
+import {
+  CampaignType,
+  TFetchStatus,
+  LotteryStatus,
+  LotteryTicket,
+  Team,
+  TranslatableText,
+} from 'config/constants/types'
 import { NftToken } from './nftMarket/types'
 
 export enum GAS_PRICE {
-  default = '5',
-  fast = '6',
-  instant = '7',
+  default = '3',
+  fast = '4',
+  instant = '5',
   testnet = '10',
 }
 
 export const GAS_PRICE_GWEI = {
   rpcDefault: 'rpcDefault',
-  default: parseUnits(GAS_PRICE.default, 'gwei').toString(),
-  fast: parseUnits(GAS_PRICE.fast, 'gwei').toString(),
-  instant: parseUnits(GAS_PRICE.instant, 'gwei').toString(),
-  testnet: parseUnits(GAS_PRICE.testnet, 'gwei').toString(),
+  default: parseEther(GAS_PRICE.default, 'gwei').toString(),
+  fast: parseEther(GAS_PRICE.fast, 'gwei').toString(),
+  instant: parseEther(GAS_PRICE.instant, 'gwei').toString(),
+  testnet: parseEther(GAS_PRICE.testnet, 'gwei').toString(),
 }
 
 export interface BigNumberToJson {
@@ -37,37 +43,15 @@ export enum VaultKey {
   IfoPool = 'ifoPool',
 }
 
-interface CorePoolProps {
-  startBlock?: number
-  endBlock?: number
-  apr?: number
-  rawApr?: number
-  stakingTokenPrice?: number
-  earningTokenPrice?: number
-  vaultKey?: VaultKey
-}
-
-export interface SerializedPool extends Pool.SerializedPoolConfig<SerializedWrappedToken>, CorePoolProps {
-  totalStaked?: SerializedBigNumber
-  stakingLimit?: SerializedBigNumber
-  numberBlocksForUserLimit?: number
-  profileRequirement?: {
-    required: boolean
-    thresholdPoints: SerializedBigNumber
-  }
-  userData?: {
-    allowance: SerializedBigNumber
-    stakingTokenBalance: SerializedBigNumber
-    stakedBalance: SerializedBigNumber
-    pendingReward: SerializedBigNumber
-  }
+export type SerializedPool = SerializedPoolWithInfo & {
+  numberSecondsForUserLimit?: number
 }
 
 export interface Profile {
   userId: number
   points: number
   teamId: number
-  collectionAddress: string
+  collectionAddress: Address
   tokenId: number
   isActive: boolean
   username: string
@@ -111,6 +95,7 @@ export interface DeserializedVaultUser {
   cakeAtLastUserAction: BigNumber
   lastDepositedTime: string
   lastUserActionTime: string
+  lockedAmount: BigNumber
   balance: {
     cakeAsNumberBalance: number
     cakeAsBigNumber: BigNumber
@@ -205,8 +190,8 @@ export enum PredictionStatus {
 }
 
 export enum PredictionSupportedSymbol {
-  BNB = 'POL',
-  CAKE = 'PLAX',
+  BNB = 'BNB',
+  CAKE = 'CAKE',
 }
 
 export enum PredictionsChartView {
@@ -300,13 +285,13 @@ export interface RoundData {
 
 export interface ReduxNodeLedger {
   position: BetPosition
-  amount: BigNumberToJson
+  amount: string
   claimed: boolean
 }
 
 export interface NodeLedger {
   position: BetPosition
-  amount: EthersBigNumber
+  amount: bigint
   claimed: boolean
 }
 
@@ -315,13 +300,13 @@ export interface ReduxNodeRound {
   startTimestamp: number | null
   lockTimestamp: number | null
   closeTimestamp: number | null
-  lockPrice: BigNumberToJson | null
-  closePrice: BigNumberToJson | null
-  totalAmount: BigNumberToJson
-  bullAmount: BigNumberToJson
-  bearAmount: BigNumberToJson
-  rewardBaseCalAmount: BigNumberToJson
-  rewardAmount: BigNumberToJson
+  lockPrice: string | null
+  closePrice: string | null
+  totalAmount: string
+  bullAmount: string
+  bearAmount: string
+  rewardBaseCalAmount: string
+  rewardAmount: string
   oracleCalled: boolean
   lockOracleId: string
   closeOracleId: string
@@ -332,13 +317,13 @@ export interface NodeRound {
   startTimestamp: number | null
   lockTimestamp: number | null
   closeTimestamp: number | null
-  lockPrice: EthersBigNumber | null
-  closePrice: EthersBigNumber | null
-  totalAmount: EthersBigNumber
-  bullAmount: EthersBigNumber
-  bearAmount: EthersBigNumber
-  rewardBaseCalAmount: EthersBigNumber
-  rewardAmount: EthersBigNumber
+  lockPrice: bigint | null
+  closePrice: bigint | null
+  totalAmount: bigint
+  bullAmount: bigint
+  bearAmount: bigint
+  rewardBaseCalAmount: bigint
+  rewardAmount: bigint
   oracleCalled: boolean
   closeOracleId: string
   lockOracleId: string
@@ -375,7 +360,7 @@ export interface PredictionsState {
   }
   leaderboard: {
     selectedAddress: string
-    loadingState: FetchStatus
+    loadingState: TFetchStatus
     filters: LeaderboardFilter
     skip: number
     hasMoreResults: boolean
@@ -458,7 +443,6 @@ interface LotteryRoundGenerics {
   endTime: string
   treasuryFee: string
   firstTicketId: string
-  lastTicketId: string
   finalNumber: number
 }
 
@@ -519,16 +503,16 @@ export interface UserRound {
 }
 
 export interface PredictionConfig {
-  address: string
+  address: Address
   api: string
-  chainlinkOracleAddress: string
+  chainlinkOracleAddress: Address
   displayedDecimals: number
   token: Token
 }
 
 // Pottery
 export interface PotteryState {
-  lastVaultAddress: string
+  lastVaultAddress: Address
   publicData: SerializedPotteryPublicData
   userData: SerializedPotteryUserData
   finishedRoundInfo: PotteryRoundInfo
@@ -603,7 +587,7 @@ export interface PotteryWithdrawAbleData {
   depositDate: string
   previewRedeem: string
   status: PotteryDepositStatus
-  potteryVaultAddress: string
+  potteryVaultAddress: Address
   totalSupply: string
   totalLockCake: string
   lockedDate: string

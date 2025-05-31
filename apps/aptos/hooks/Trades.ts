@@ -2,9 +2,8 @@
 import { Pair, Trade, Currency, CurrencyAmount, Token, TradeType } from '@pancakeswap/aptos-swap-sdk'
 import flatMap from 'lodash/flatMap'
 import { useMemo } from 'react'
-import useActiveWeb3React from 'hooks/useActiveWeb3React'
 
-import { useUserSingleHopOnly } from 'state/user/singleHop'
+import { useUserSingleHopOnly } from '@pancakeswap/utils/user'
 import {
   BASES_TO_CHECK_TRADES_AGAINST,
   CUSTOM_BASES,
@@ -12,6 +11,7 @@ import {
   ADDITIONAL_BASES,
 } from 'config/constants/exchange'
 import { PairState, usePairs } from './usePairs'
+import { useActiveChainId } from './useNetwork'
 
 // import { useUnsupportedTokens, useWarningTokens } from './Tokens'
 function useUnsupportedTokens() {
@@ -23,7 +23,7 @@ function useWarningTokens() {
 }
 
 export function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
-  const { chainId: activeChainId } = useActiveWeb3React()
+  const activeChainId = useActiveChainId()
 
   const chainId = currencyA?.chainId || activeChainId
 

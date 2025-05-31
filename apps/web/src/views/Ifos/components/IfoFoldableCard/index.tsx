@@ -219,7 +219,7 @@ const IfoFoldableCard = ({
     const hash = asPath.split('#')[1]
     if (hash === ifo.id) {
       setIsExpanded(true)
-      wrapperEl.current.scrollIntoView({ behavior: 'smooth' })
+      wrapperEl?.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [asPath, ifo])
 
@@ -258,7 +258,7 @@ const IfoCard: React.FC<React.PropsWithChildren<IfoFoldableCardProps>> = ({ ifo,
   const [enableStatus, setEnableStatus] = useState(EnableStatus.DISABLED)
   const { t } = useTranslation()
   const { address: account } = useAccount()
-  const raisingTokenContract = useERC20(ifo.currency.address, false)
+  const raisingTokenContract = useERC20(ifo.currency.address)
   // Continue to fetch 2 more minutes / is vesting need get latest data
   const isRecentlyActive =
     (publicIfoData.status !== 'finished' ||
@@ -292,18 +292,14 @@ const IfoCard: React.FC<React.PropsWithChildren<IfoFoldableCardProps>> = ({ ifo,
         : !isPublicIfoDataInitialized
         ? ['fetchPublicIfoData', ifo.id]
         : null),
-    async () => {
-      fetchPublicIfoData(currentBlock)
-    },
+    async () => fetchPublicIfoData(currentBlock),
   )
 
   useSWRImmutable(
     isWindowVisible &&
       (isRecentlyActive || !isWalletDataInitialized || hasVesting) &&
       account && ['fetchWalletIfoData', account, ifo.id],
-    async () => {
-      fetchWalletIfoData()
-    },
+    async () => fetchWalletIfoData(),
     isRecentlyActive || hasVesting
       ? {
           refreshInterval: FAST_INTERVAL,

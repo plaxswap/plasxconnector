@@ -53,13 +53,20 @@ const AutoEarningsBreakdown: React.FC<React.PropsWithChildren<AutoEarningsBreakd
         <Box mt="12px">
           <Text>{t('Hourly Average')}:</Text>
           <Text bold>
-            {earnedCakePerHour < 0.01 ? '<0.01' : earnedCakePerHour.toFixed(2)} PLAX
+            {earnedCakePerHour < 0.01 ? '<0.01' : earnedCakePerHour.toFixed(2)} CAKE
             <Text display="inline-block" ml="5px">
               ({earnedUsdPerHour < 0.01 ? '<0.01' : `~${earnedUsdPerHour.toFixed(2)}`} USD)
             </Text>
           </Text>
         </Box>
       ) : null}
+      <Box mt="12px">
+        <Text>
+          {t(
+            '*Please note that any deposit, withdraw, extend or convert action will combine earned rewards with the original staked amount. Resetting this number to 0.',
+          )}
+        </Text>
+      </Box>
     </>
   )
 }

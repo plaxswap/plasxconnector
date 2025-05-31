@@ -1,19 +1,19 @@
-import { Currency, CurrencyAmount, Fraction, JSBI, Percent, Price, TradeType, ZERO_PERCENT } from '@pancakeswap/sdk'
+import { Currency, CurrencyAmount, Fraction, Percent, Price, TradeType, ZERO_PERCENT } from '@pancakeswap/sdk'
 
-import { parseUnits } from '@ethersproject/units'
-import PancakeSwapMMLinkedPoolABI from 'config/abi/mmLinkedPool.json'
-import { MmLinkedPool } from 'config/abi/types/MmLinkedPool'
+import { parseUnits } from 'viem'
 import { ONE_HUNDRED_PERCENT } from 'config/constants/exchange'
 import { useActiveChainId } from 'hooks/useActiveChainId'
+import { mmLinkedPoolABI } from 'config/abi/mmLinkedPool'
 import { useContract } from 'hooks/useContract'
 import toNumber from 'lodash/toNumber'
+import { Address } from 'wagmi'
 import { Field } from 'state/swap/actions'
 import { MM_STABLE_TOKENS_WHITE_LIST, MM_SWAP_CONTRACT_ADDRESS, NATIVE_CURRENCY_ADDRESS } from '../constants'
 import { OrderBookRequest, TradeWithMM } from '../types'
 
 export function useMMSwapContract() {
   const { chainId } = useActiveChainId()
-  return useContract<MmLinkedPool>(MM_SWAP_CONTRACT_ADDRESS[chainId], PancakeSwapMMLinkedPoolABI, true)
+  return useContract(MM_SWAP_CONTRACT_ADDRESS[chainId], mmLinkedPoolABI)
 }
 
 // computes price breakdown for the trade
@@ -86,17 +86,15 @@ export function formatExecutionPrice(trade?: TradeWithMM<Currency, Currency, Tra
       }`
 }
 
-export const tryParseUnit = (typedValue?: string, decimals?: number) => {
-  let parseAmountString
+export const tryParseUnit = (typedValue?: `${number}`, decimals?: number) => {
+  let parseAmountString: string | undefined
   if (!typedValue || !decimals) return parseAmountString
   try {
     parseAmountString = parseUnits(typedValue, decimals).toString()
   } catch {
-    parseAmountString = parseUnits(toNumber(typedValue).toFixed(decimals), decimals).toString()
-  } finally {
-    // eslint-disable-next-line no-unsafe-finally
-    return parseAmountString
+    parseAmountString = parseUnits(`${toNumber(typedValue).toFixed(decimals)}` as `${number}`, decimals).toString()
   }
+  return parseAmountString
 }
 
 export const parseMMParameter = (
@@ -104,8 +102,8 @@ export const parseMMParameter = (
   inputCurrency?: Currency,
   outputCurrency?: Currency,
   independentField?: Field,
-  typedValue?: string,
-  account?: string,
+  typedValue?: `${number}`,
+  account?: Address,
   isForRFQ?: boolean,
 ): OrderBookRequest => {
   if (!chainId || !inputCurrency || !outputCurrency || !outputCurrency || !independentField || !typedValue) return null
@@ -143,8 +141,8 @@ export const parseMMTrade = (
   if (!inputCurrency || !outputCurrency || !takerSideTokenAmount || !makerSideTokenAmount) return null
   const bestTradeWithMM: TradeWithMM<Currency, Currency, TradeType> = {
     tradeType: isExactIn ? TradeType.EXACT_INPUT : TradeType.EXACT_OUTPUT,
-    inputAmount: CurrencyAmount.fromRawAmount(inputCurrency, JSBI.BigInt(takerSideTokenAmount)),
-    outputAmount: CurrencyAmount.fromRawAmount(outputCurrency, JSBI.BigInt(makerSideTokenAmount)),
+    inputAmount: CurrencyAmount.fromRawAmount(inputCurrency, BigInt(takerSideTokenAmount)),
+    outputAmount: CurrencyAmount.fromRawAmount(outputCurrency, BigInt(makerSideTokenAmount)),
     route: {
       input: inputCurrency,
       output: outputCurrency,
@@ -155,9 +153,14 @@ export const parseMMTrade = (
   return bestTradeWithMM
 }
 
-export const shouldShowMMError = (message?: string) => {
+export const shouldShowMMSpecificError = (message?: string) => {
   if (message?.includes('Amount is below')) return true
   if (message?.includes('Amount is above')) return true
+  return false
+}
+
+export const shouldShowMMLiquidityError = (message?: string) => {
+  if (message?.includes('not found')) return true
   return false
 }
 

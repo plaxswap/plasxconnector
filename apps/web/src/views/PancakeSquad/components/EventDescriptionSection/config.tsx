@@ -9,7 +9,7 @@ type EventDescriptionType = {
 const eventDescriptionConfigBuilder = ({ t }: EventDescriptionType) => ({
   headingText: t('Fair, Random, Rare'),
   subHeadingText: t(
-    'All Plaxswap Squad NFTs are allocated to Squad Ticket holders through a provably-fair system based on ChainLink at the time of minting.',
+    'All Pancake Squad NFTs are allocated to Squad Ticket holders through a provably-fair system based on ChainLink at the time of minting.',
   ),
   bodyTextHeader: t('Out of the 10,000 total NFTs in the squad,'),
   bodyText: [
@@ -26,7 +26,7 @@ const eventDescriptionConfigBuilder = ({ t }: EventDescriptionType) => ({
         <>
           {t('and the remaining NFTs can be minted by anyone with a ')}
           <Link href="/profile" passHref>
-            <Text as="a" display="inline-block" color="primary" bold>
+            <Text display="inline-block" color="primary" bold>
               {t('Pancake Profile!')}
             </Text>
           </Link>
@@ -35,7 +35,7 @@ const eventDescriptionConfigBuilder = ({ t }: EventDescriptionType) => ({
     },
   ],
   primaryButton: {
-    to: 'https://docs.plaxswap.io/',
+    to: 'https://docs.pancakeswap.finance/',
     text: t('View Documentation'),
     external: true,
     isDisplayed: false,

@@ -224,8 +224,8 @@ const V3Banner = () => {
       <S.Inner>
         <S.LeftWrapper>
           <Title>{t('PancakeSwap V3')}</Title>
-          <StyledSubheading data-text={t('Swap PLAX Token')}>
-            {t('Swap PLAX Token')}
+          <StyledSubheading data-text={t('Claim $135K CAKE Airdrop & Exclusive NFT')}>
+            {t('Claim $135K CAKE Airdrop & Exclusive NFT')}
           </StyledSubheading>
           <NextLinkFromReactRouter
             target="_blank"
@@ -234,7 +234,7 @@ const V3Banner = () => {
           >
             <StyledButtonLeft scale={isMobile ? 'sm' : 'md'}>
               <Text bold fontSize="16px" mr="4px" color="invertedContrast">
-                {isMobile ? t('Learn More') : t('Learn More')}
+                {t('Learn More')}
               </Text>
               <OpenNewIcon color="invertedContrast" />
             </StyledButtonLeft>

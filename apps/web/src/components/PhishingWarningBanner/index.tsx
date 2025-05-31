@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import styled from 'styled-components'
 import { Text, Flex, Box, CloseIcon, IconButton, useMatchBreakpoints } from '@pancakeswap/uikit'
 import { useTranslation } from '@pancakeswap/localization'
-import { usePhishingBannerManager } from 'state/user/hooks'
+import { usePhishingBanner } from '@pancakeswap/utils/user'
 
 const Container = styled(Flex)`
   overflow: hidden;
@@ -10,10 +10,10 @@ const Container = styled(Flex)`
   padding: 12px;
   align-items: center;
   background: linear-gradient(0deg, rgba(39, 38, 44, 0.4), rgba(39, 38, 44, 0.4)),
-    linear-gradient(180deg, #0c11e3 0%, #170e24 100%);
+    linear-gradient(180deg, #8051d6 0%, #492286 100%);
   ${({ theme }) => theme.mediaQueries.md} {
     padding: 0px;
-    background: linear-gradient(180deg, #0c11e3 0%, #170e24  100%);
+    background: linear-gradient(180deg, #8051d6 0%, #492286 100%);
   }
 `
 
@@ -44,7 +44,7 @@ const domain = 'https://plaxswap.io'
 
 const PhishingWarningBanner: React.FC<React.PropsWithChildren> = () => {
   const { t } = useTranslation()
-  const [, hideBanner] = usePhishingBannerManager()
+  const [, hideBanner] = usePhishingBanner()
   const { isMobile, isMd } = useMatchBreakpoints()
   const warningTextAsParts = useMemo(() => {
     const warningText = t("please make sure you're visiting %domain% - check the URL carefully.", { domain })
@@ -82,11 +82,11 @@ const PhishingWarningBanner: React.FC<React.PropsWithChildren> = () => {
         <>
           <InnerContainer>
             <img
-              src="/images/decorations/phishing-warning-robot.webp"
+              src="/images/decorations/phishing-warning-bunny.webp"
               alt="phishing-warning"
               width="92px"
               onError={(e) => {
-                const fallbackSrc = '/images/decorations/phishing-warning-robot.png'
+                const fallbackSrc = '/images/decorations/phishing-warning-bunny.png'
                 if (!e.currentTarget.src.endsWith(fallbackSrc)) {
                   // eslint-disable-next-line no-param-reassign
                   e.currentTarget.src = fallbackSrc

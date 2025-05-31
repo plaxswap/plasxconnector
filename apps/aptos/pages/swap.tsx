@@ -1,7 +1,6 @@
 import {
   Currency,
   CurrencyAmount,
-  JSBI,
   Percent,
   Router,
   SWAP_ADDRESS_MODULE,
@@ -49,8 +48,8 @@ import useSimulationAndSendTransaction from 'hooks/useSimulationAndSendTransacti
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Field, selectCurrency, switchCurrencies, typeInput, useDefaultsFromURLSearch, useSwapState } from 'state/swap'
 import { useTransactionAdder } from 'state/transactions/hooks'
-import { useUserSlippage } from 'state/user'
-import { useIsExpertMode } from 'state/user/expertMode'
+import { useUserSlippage } from '@pancakeswap/utils/user'
+import { useIsExpertMode } from '@pancakeswap/utils/user/expertMode'
 import useSWRImmutable from 'swr/immutable'
 import currencyId from 'utils/currencyId'
 import {
@@ -175,7 +174,7 @@ const SwapPage = () => {
     if (trade) {
       return async () => {
         const payload = Router.swapCallParameters(trade, {
-          allowedSlippage: new Percent(JSBI.BigInt(userAllowedSlippage), BIPS_BASE),
+          allowedSlippage: new Percent(BigInt(userAllowedSlippage), BIPS_BASE),
         })
         if (!payload) {
           throw new Error('Missing swap call')
@@ -457,7 +456,7 @@ const SwapPage = () => {
             showUSDPrice
           />
           {showBridgeWarning && (
-            <AtomBox width="full">
+            <AtomBox width="100%">
               <Flex justifyContent="flex-end">
                 <Text fontSize="12px" color="warning">
                   {t('Use')}
@@ -478,7 +477,7 @@ const SwapPage = () => {
               </Flex>
             </AtomBox>
           )}
-          <AtomBox width="full" textAlign="center">
+          <AtomBox width="100%" textAlign="center">
             <SwitchButton
               onClick={() => {
                 handleSwitch()

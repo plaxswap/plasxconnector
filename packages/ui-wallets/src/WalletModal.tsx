@@ -19,7 +19,6 @@ import {
 import { atom, useAtom } from 'jotai'
 import { lazy, PropsWithChildren, Suspense, useMemo, useState } from 'react'
 import { isMobile } from 'react-device-detect'
-import { StepIntro } from './components/Intro'
 import {
   desktopWalletSelectionClass,
   modalWrapperClass,
@@ -27,6 +26,8 @@ import {
   promotedGradientClass,
   walletSelectWrapperClass,
 } from './WalletModal.css'
+
+const StepIntro = lazy(() => import('./components/Intro'))
 
 const Qrcode = lazy(() => import('./components/QRCode'))
 
@@ -79,7 +80,7 @@ const TabContainer = ({ children, docLink, docText }: PropsWithChildren<{ docLin
   return (
     <AtomBox position="relative" zIndex="modal" className={modalWrapperClass}>
       <AtomBox position="absolute" style={{ top: '-50px' }}>
-        <TabMenu activeIndex={index} onItemClick={setIndex} gap="0px" isColorInverse>
+        <TabMenu activeIndex={index} onItemClick={setIndex} gap="0px" isColorInverse isShowBorderBottom={false}>
           <Tab>{t('Connect Wallet')}</Tab>
           <Tab>{t('What’s a Web3 Wallet?')}</Tab>
         </TabMenu>
@@ -94,10 +95,14 @@ const TabContainer = ({ children, docLink, docText }: PropsWithChildren<{ docLin
           md: 'card',
         }}
         zIndex="modal"
-        width="full"
+        width="100%"
       >
         {index === 0 && children}
-        {index === 1 && <StepIntro docLink={docLink} docText={docText} />}
+        {index === 1 && (
+          <Suspense>
+            <StepIntro docLink={docLink} docText={docText} />
+          </Suspense>
+        )}
       </AtomBox>
     </AtomBox>
   )
@@ -127,7 +132,7 @@ function MobileModal<T>({
   })
 
   return (
-    <AtomBox width="full">
+    <AtomBox width="100%">
       {error ? (
         <AtomBox
           display="flex"
@@ -230,7 +235,7 @@ function WalletSelect<T>({
                   <Icon width={24} height={24} color="textSubtle" />
                 )}
                 {wallet.id === selected?.id && (
-                  <AtomBox position="absolute" inset="0" bgc="secondary" opacity="0.5" borderRadius="12px" />
+                  <AtomBox position="absolute" inset="0px" bgc="secondary" opacity="0.5" borderRadius="12px" />
                 )}
               </AtomBox>
             </AtomBox>
@@ -335,9 +340,14 @@ function DesktopModal<T>({
             connectToWallet(w)
             setQrCode(undefined)
             if (w.qrCode) {
-              w.qrCode().then((uri) => {
-                setQrCode(uri)
-              })
+              w.qrCode().then(
+                (uri) => {
+                  setQrCode(uri)
+                },
+                () => {
+                  // do nothing.
+                },
+              )
             }
           }}
         />
@@ -419,7 +429,7 @@ export function WalletModalV2<T = unknown>(props: WalletModalV2Props<T>) {
   }
 
   return (
-    <ModalV2 closeOnOverlayClick {...rest}>
+    <ModalV2 closeOnOverlayClick disableOutsidePointerEvents={false} {...rest}>
       <ModalWrapper onDismiss={props.onDismiss} style={{ overflow: 'visible', border: 'none' }}>
         <AtomBox position="relative">
           <TabContainer docLink={docLink} docText={docText}>

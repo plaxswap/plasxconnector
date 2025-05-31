@@ -4,6 +4,9 @@ import { Flex } from "../../../../components/Box";
 import { LinkExternal } from "../../../../components/Link";
 import { Skeleton } from "../../../../components/Skeleton";
 import { Text } from "../../../../components/Text";
+import { HelpIcon } from "../../../../components/Svg";
+import { useTooltip } from "../../../../hooks/useTooltip";
+import { FarmMultiplierInfo } from "../FarmMultiplierInfo";
 
 export interface ExpandableSectionProps {
   scanAddressLink?: string;
@@ -11,10 +14,14 @@ export interface ExpandableSectionProps {
   removed?: boolean;
   totalValueFormatted?: string;
   lpLabel: string;
-  addLiquidityUrl?: string;
+  onAddLiquidity?: (() => void) | string;
   isCommunity?: boolean;
   auctionHostingEndDate?: string;
   alignLinksToRight?: boolean;
+  totalValueLabel?: string;
+  multiplier?: string;
+  farmCakePerSecond?: string;
+  totalMultipliers?: string;
 }
 
 const Wrapper = styled.div`
@@ -25,21 +32,41 @@ const StyledLinkExternal = styled(LinkExternal)`
   font-weight: 400;
 `;
 
+const StyledText = styled(Text)`
+  &:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`;
+
 export const DetailsSection: React.FC<React.PropsWithChildren<ExpandableSectionProps>> = ({
   scanAddressLink,
   infoAddress,
   removed,
+  totalValueLabel,
   totalValueFormatted,
   lpLabel,
-  addLiquidityUrl,
+  onAddLiquidity,
   isCommunity,
   auctionHostingEndDate,
   alignLinksToRight = true,
+  multiplier,
+  farmCakePerSecond,
+  totalMultipliers,
 }) => {
   const {
     t,
     currentLanguage: { locale },
   } = useTranslation();
+
+  const multiplierTooltipContent = FarmMultiplierInfo({
+    farmCakePerSecond: farmCakePerSecond ?? "-",
+    totalMultipliers: totalMultipliers ?? "-",
+  });
+
+  const { targetRef, tooltip, tooltipVisible } = useTooltip(multiplierTooltipContent, {
+    placement: "bottom",
+  });
 
   return (
     <Wrapper>
@@ -56,17 +83,39 @@ export const DetailsSection: React.FC<React.PropsWithChildren<ExpandableSectionP
         </Flex>
       )}
       <Flex justifyContent="space-between">
-        <Text>{t("Total Liquidity")}:</Text>
+        <Text>{totalValueLabel || t("Staked Liquidity")}:</Text>
         {totalValueFormatted ? <Text>{totalValueFormatted}</Text> : <Skeleton width={75} height={25} />}
+      </Flex>
+      <Flex justifyContent="space-between">
+        <Text>{t("Multiplier")}:</Text>
+        {multiplier ? (
+          <Flex>
+            <Text>{multiplier}</Text>
+            {tooltipVisible && tooltip}
+            <Flex ref={targetRef}>
+              <HelpIcon ml="4px" width="20px" height="20px" color="textSubtle" />
+            </Flex>
+          </Flex>
+        ) : (
+          <Skeleton width={75} height={25} />
+        )}
       </Flex>
       {!removed && (
         <Flex mb="2px" justifyContent={alignLinksToRight ? "flex-end" : "flex-start"}>
-          <StyledLinkExternal href={addLiquidityUrl}>{t("Get %symbol%", { symbol: lpLabel })}</StyledLinkExternal>
+          {onAddLiquidity ? (
+            typeof onAddLiquidity === "string" ? (
+              <StyledLinkExternal href={onAddLiquidity}>{t("Add %symbol%", { symbol: lpLabel })}</StyledLinkExternal>
+            ) : (
+              <StyledText color="primary" onClick={onAddLiquidity}>
+                {t("Add %symbol%", { symbol: lpLabel })}
+              </StyledText>
+            )
+          ) : null}
         </Flex>
       )}
       {infoAddress && (
         <Flex mb="2px" justifyContent={alignLinksToRight ? "flex-end" : "flex-start"}>
-          {/* <StyledLinkExternal href={infoAddress}>{t("See Pair Info")}</StyledLinkExternal> */}
+          <StyledLinkExternal href={infoAddress}>{t("See Pair Info")}</StyledLinkExternal>
         </Flex>
       )}
       {scanAddressLink && (

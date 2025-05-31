@@ -1,4 +1,3 @@
-import { MaxUint256 } from '@ethersproject/constants'
 import { useTranslation } from '@pancakeswap/localization'
 import { bscTokens } from '@pancakeswap/tokens'
 import {
@@ -22,18 +21,18 @@ import { ToastDescriptionWithTx } from 'components/Toast'
 import { FetchStatus } from 'config/constants/types'
 import useApproveConfirmTransaction from 'hooks/useApproveConfirmTransaction'
 import { useCallWithGasPrice } from 'hooks/useCallWithGasPrice'
-import { useCake, useLotteryV2Contract } from 'hooks/useContract'
+import { useLotteryV2Contract } from 'hooks/useContract'
 import useTheme from 'hooks/useTheme'
 import useTokenBalance from 'hooks/useTokenBalance'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppDispatch } from 'state'
-import { usePriceCakeBusd } from 'state/farms/hooks'
+import { usePriceCakeUSD } from 'state/farms/hooks'
 import { fetchUserTicketsAndLotteries } from 'state/lottery'
 import { useLottery } from 'state/lottery/hooks'
+import { parseEther } from 'viem'
 import styled from 'styled-components'
 import { BIG_ZERO, BIG_ONE_HUNDRED } from '@pancakeswap/utils/bigNumber'
 import { getFullDisplayBalance } from '@pancakeswap/utils/formatBalance'
-import { requiresApproval } from 'utils/requiresApproval'
 import EditNumbersModal from './EditNumbersModal'
 import NumTicketsToBuyButton from './NumTicketsToBuyButton'
 import { useTicketsReducer } from './useTicketsReducer'
@@ -83,14 +82,13 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
   const [maxTicketPurchaseExceeded, setMaxTicketPurchaseExceeded] = useState(false)
   const [userNotEnoughCake, setUserNotEnoughCake] = useState(false)
   const lotteryContract = useLotteryV2Contract()
-  const { reader: cakeContractReader, signer: cakeContractApprover } = useCake()
   const { toastSuccess } = useToast()
   const { balance: userCake, fetchStatus } = useTokenBalance(bscTokens.cake.address)
   // balance from useTokenBalance causes rerenders in effects as a new BigNumber is instantiated on each render, hence memoising it using the stringified value below.
   const stringifiedUserCake = userCake.toJSON()
   const memoisedUserCake = useMemo(() => new BigNumber(stringifiedUserCake), [stringifiedUserCake])
 
-  const cakePriceBusd = usePriceCakeBusd()
+  const cakePriceBusd = usePriceCakeUSD()
   const dispatch = useAppDispatch()
   const hasFetchedBalance = fetchStatus === FetchStatus.Fetched
   const userCakeDisplayBalance = getFullDisplayBalance(userCake, 18, 3)
@@ -243,12 +241,9 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
 
   const { isApproving, isApproved, isConfirmed, isConfirming, handleApprove, handleConfirm } =
     useApproveConfirmTransaction({
-      onRequiresApproval: async () => {
-        return requiresApproval(cakeContractReader, account, lotteryContract.address)
-      },
-      onApprove: () => {
-        return callWithGasPrice(cakeContractApprover, 'approve', [lotteryContract.address, MaxUint256])
-      },
+      token: bscTokens.cake,
+      spender: lotteryContract.address,
+      minAmount: parseEther(totalCost as `${number}`),
       onApproveSuccess: async ({ receipt }) => {
         toastSuccess(
           t('Contract enabled - you can now purchase tickets'),
@@ -257,7 +252,7 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
       },
       onConfirm: () => {
         const ticketsForPurchase = getTicketsForPurchase()
-        return callWithGasPrice(lotteryContract, 'buyTickets', [currentLotteryId, ticketsForPurchase])
+        return callWithGasPrice(lotteryContract, 'buyTickets', [BigInt(currentLotteryId), ticketsForPurchase])
       },
       onSuccess: async ({ receipt }) => {
         onDismiss?.()
@@ -267,7 +262,7 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
     })
 
   const getErrorMessage = () => {
-    if (userNotEnoughCake) return t('Insufficient PLAX balance')
+    if (userNotEnoughCake) return t('Insufficient CAKE balance')
     return t('The maximum number of tickets you can buy in one transaction is %maxTickets%', {
       maxTickets: maxNumberTicketsPerBuyOrClaim.toString(),
     })
@@ -323,7 +318,7 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
         onUserInput={handleInputChange}
         currencyValue={
           cakePriceBusd.gt(0) &&
-          `~${ticketsToBuy ? getFullDisplayBalance(priceTicketInCake.times(new BigNumber(ticketsToBuy))) : '0.00'} PLAX`
+          `~${ticketsToBuy ? getFullDisplayBalance(priceTicketInCake.times(new BigNumber(ticketsToBuy))) : '0.00'} CAKE`
         }
       />
       <Flex alignItems="center" justifyContent="flex-end" mt="4px" mb="12px">
@@ -336,7 +331,7 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
           {account && (
             <Flex justifyContent="flex-end">
               <Text fontSize="12px" color="textSubtle" mr="4px">
-                PLAX {t('Balance')}:
+                CAKE {t('Balance')}:
               </Text>
               {hasFetchedBalance ? (
                 <Text fontSize="12px" color="textSubtle">
@@ -381,10 +376,10 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
       <Flex flexDirection="column">
         <Flex mb="8px" justifyContent="space-between">
           <Text color="textSubtle" fontSize="14px">
-            {t('Cost')} (PLAX)
+            {t('Cost')} (CAKE)
           </Text>
           <Text color="textSubtle" fontSize="14px">
-            {priceTicketInCake && getFullDisplayBalance(priceTicketInCake.times(ticketsToBuy || 0))} PLAX
+            {priceTicketInCake && getFullDisplayBalance(priceTicketInCake.times(ticketsToBuy || 0))} CAKE
           </Text>
         </Flex>
         <Flex mb="8px" justifyContent="space-between">
@@ -400,7 +395,7 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
             </Flex>
           </Flex>
           <Text fontSize="14px" color="textSubtle">
-            ~{discountValue} PLAX
+            ~{discountValue} CAKE
           </Text>
         </Flex>
         <Flex borderTop={`1px solid ${theme.colors.cardBorder}`} pt="8px" mb="24px" justifyContent="space-between">
@@ -408,7 +403,7 @@ const BuyTicketsModal: React.FC<React.PropsWithChildren<BuyTicketsModalProps>> =
             {t('You pay')}
           </Text>
           <Text fontSize="16px" bold>
-            ~{totalCost} PLAX
+            ~{totalCost} CAKE
           </Text>
         </Flex>
 
