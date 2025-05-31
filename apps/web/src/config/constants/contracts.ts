@@ -24,11 +24,11 @@ export default {
     1: '0xcA11bde05977b3631167028862bE2a173976CA11',
     4: '0xcA11bde05977b3631167028862bE2a173976CA11',
     5: '0xcA11bde05977b3631167028862bE2a173976CA11',
-    137: '0x73F0B36EE4c99fA26110Dd1A8b79805312dc6F9D', //multicall polygon
+    137: '0x73F0B36EE4c99fA26110Dd1A8b79805312dc6F9D',
     97: '0xcA11bde05977b3631167028862bE2a173976CA11',
   },
   pancakeProfile: {
-    137: '0xAC8a89229F91Ed46B0b0EEF9622a1e7979382984', //pancakeprofile polygon
+    137: '0xAC8a89229F91Ed46B0b0EEF9622a1e7979382984',
     97: '0x4B683C7E13B6d5D7fd1FeA9530F451954c1A7c8A',
   },
   pancakeBunnies: {
@@ -52,7 +52,7 @@ export default {
     97: '0x7b7b1583De1DeB32Ce6605F6deEbF24A0671c17C',
   },
   tradingCompetitionEaster: {
-    137: '0xcA11bde05977b3631167028862bE2a173976CA11', //tradingcompetition polygon blm update
+    137: '0xcA11bde05977b3631167028862bE2a173976CA11',
     97: '0xC787F45B833721ED3aC46E99b703B3E1E01abb97',
   },
   tradingCompetitionFanToken: {
@@ -156,12 +156,12 @@ export default {
     97: '0x',
   },
   nonBscVault: {
-    56: '0xE6c904424417D03451fADd6E3f5b6c26BcC43841', // Only for pass contracts test
+    56: '0xE6c904424417D03451fADd6E3f5b6c26BcC43841',
     1: '0x2e71B2688019ebdFDdE5A45e6921aaebb15b25fb',
     5: '0xE6c904424417D03451fADd6E3f5b6c26BcC43841',
   },
   crossFarmingSender: {
-    56: '0x327d26dE30f92600620A99043034e0A5FD9402C8', // Only for pass contracts test
+    56: '0x327d26dE30f92600620A99043034e0A5FD9402C8',
     1: '0x8EA90Ef07f37c77137453C7A1B72B7886d51eCFb',
     5: '0x327d26dE30f92600620A99043034e0A5FD9402C8',
   },
