@@ -15,10 +15,10 @@
     "@ethersproject/keccak256": "^5.7.0",
     "@pancakeswap/aptos-swap-sdk": "*",
     "@pancakeswap/awgmi": "*",
-    "@pancakeswap/token-lists": "*",
     "@pancakeswap/farms": "*",
-    "@pancakeswap/uikit": "*",
+    "@pancakeswap/token-lists": "*",
     "@pancakeswap/ui-wallets": "*",
+    "@pancakeswap/uikit": "*",
     "@vercel/analytics": "^0.1.2",
     "aptos": "^1.3.16",
     "bignumber.js": "^9.0.0",
@@ -29,8 +29,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^5.3.3",
-    "typescript": "^4.9.4",
-    "swiper": "^8.4.2"
+    "swiper": "^8.4.2",
+    "typescript": "^4.9.4"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "13.0.7",
